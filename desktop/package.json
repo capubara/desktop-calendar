@@ -1,0 +1,50 @@
+{
+  "name": "fantasia-calendar-desktop",
+  "version": "1.0.0",
+  "description": "Fantasia Calendar desktop shell",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "local.fantasia.calendar",
+    "productName": "Fantasia Calendar",
+    "files": [
+      "main.js"
+    ],
+    "extraResources": [
+      {
+        "from": "../app",
+        "to": "server/app"
+      },
+      {
+        "from": "../public",
+        "to": "server/public"
+      },
+      {
+        "from": "../storage",
+        "to": "server/storage"
+      },
+      {
+        "from": "vendor/php",
+        "to": "php",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

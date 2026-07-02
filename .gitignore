@@ -1,0 +1,7 @@
+storage/app.sqlite
+storage/mailbox.log
+storage/logs/
+desktop/node_modules/
+desktop/dist/
+desktop/vendor/php/
+*.log
