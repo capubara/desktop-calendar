@@ -28,6 +28,13 @@ function ymd(date) {
   return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
 }
 
+function noteLabel(count) {
+  count = Number(count || 0);
+  if (count % 10 === 1 && count % 100 !== 11) return count + ' заметка';
+  if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) return count + ' заметки';
+  return count + ' заметок';
+}
+
 async function api(action, data, method) {
   var options = { credentials: 'same-origin' };
   if (method !== 'GET') {
@@ -200,16 +207,54 @@ function drawCalendar() {
     var d = new Date(start);
     d.setDate(start.getDate() + i);
     var key = ymd(d);
-    var dayEvents = state.events.filter(function (ev) {
-      var s = String(ev.starts_at).slice(0, 10), e = String(ev.ends_at).slice(0, 10);
-      var ok = s <= key && e >= key;
-      var q = !state.search || String(ev.title).toLowerCase().includes(state.search);
-      return ok && q;
-    });
+    var dayEvents = eventsForDate(key, true);
     html += '<button class="day ' + (d.getMonth() !== state.month.getMonth() ? 'muted ' : '') + (key === today ? 'today' : '') + '" data-date="' + key + '"><span class="num">' + d.getDate() + '</span>' + dayEvents.slice(0, 3).map(function (ev) { return '<span class="event-pill" style="border-left-color:' + escapeHtml(ev.color || state.settings.palette) + '">' + escapeHtml(ev.title) + '</span>'; }).join('') + '</button>';
   }
   grid.innerHTML = html;
-  grid.querySelectorAll('.day').forEach(function (day) { day.onclick = function () { openEventModal({ date: day.dataset.date }); }; });
+  grid.querySelectorAll('.day').forEach(function (day) {
+    day.onclick = function () {
+      var dayEvents = eventsForDate(day.dataset.date, false).filter(function (ev) { return Number(ev.user_id) === Number(state.user.id); });
+      if (dayEvents.length > 0) openDayActionModal(day.dataset.date, dayEvents);
+      else openEventModal({ date: day.dataset.date });
+    };
+  });
+}
+
+function eventsForDate(date, useSearch) {
+  return state.events.filter(function (ev) {
+    var s = String(ev.starts_at).slice(0, 10), e = String(ev.ends_at).slice(0, 10);
+    var ok = s <= date && e >= date;
+    var q = !useSearch || !state.search || String(ev.title).toLowerCase().includes(state.search);
+    return ok && q;
+  });
+}
+
+function openDayActionModal(date, events) {
+  var html = '<div class="modal-backdrop" id="modal"><div class="modal compact-modal"><div class="topbar"><h2>Что добавить?</h2><button class="icon-btn" id="closeModal">×</button></div><p>В этом дне уже есть мероприятия. Выберите, что хотите добавить.</p><div class="form-row"><button class="btn primary" id="dayAddEvent">Событие</button><button class="btn success" id="dayAddNote">Заметку</button></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  document.getElementById('closeModal').onclick = closeModal;
+  document.getElementById('dayAddEvent').onclick = function () { closeModal(); openEventModal({ date: date }); };
+  document.getElementById('dayAddNote').onclick = function () {
+    closeModal();
+    if (events.length === 1) openNotesModal(events[0]);
+    else openEventPickerModal(date, events);
+  };
+}
+
+function openEventPickerModal(date, events) {
+  var rows = events.map(function (ev) {
+    return '<button class="list-row event-choice" data-note-event="' + ev.id + '"><strong>' + escapeHtml(ev.title) + '</strong><span class="meta">' + fmtDate(ev.starts_at) + ' - ' + fmtDate(ev.ends_at) + '</span></button>';
+  }).join('');
+  var html = '<div class="modal-backdrop" id="modal"><div class="modal"><div class="topbar"><h2>Выберите мероприятие</h2><button class="icon-btn" id="closeModal">×</button></div><div class="plain-list">' + rows + '</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  document.getElementById('closeModal').onclick = closeModal;
+  document.querySelectorAll('[data-note-event]').forEach(function (btn) {
+    btn.onclick = function () {
+      var event = events.find(function (ev) { return String(ev.id) === String(btn.dataset.noteEvent); });
+      closeModal();
+      openNotesModal(event);
+    };
+  });
 }
 
 function openEventModal(event) {
@@ -223,6 +268,47 @@ function openEventModal(event) {
   };
 }
 
+async function openNotesModal(event) {
+  if (!event) return;
+  var html = '<div class="modal-backdrop" id="modal"><div class="modal notes-modal"><div class="topbar"><div><h2>Заметки</h2><p>' + escapeHtml(event.title) + '</p></div><button class="icon-btn" id="closeModal">×</button></div><div id="notesBody"><p>Загрузка...</p></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  document.getElementById('closeModal').onclick = closeModal;
+  await loadNotesIntoModal(event);
+}
+
+async function loadNotesIntoModal(event) {
+  var body = document.getElementById('notesBody');
+  if (!body) return;
+  try {
+    var res = await api('event_notes&event_id=' + event.id, null, 'GET');
+    var notesHtml = res.notes.map(function (note) {
+      return '<div class="note-card"><textarea data-note-body="' + note.id + '">' + escapeHtml(note.body) + '</textarea><div class="note-actions"><button class="btn warning" data-save-note="' + note.id + '">Изменить</button><button class="btn danger" data-delete-note="' + note.id + '">Удалить</button></div><span class="meta">Обновлено: ' + escapeHtml(note.updated_at) + '</span></div>';
+    }).join('') || '<p>Заметок пока нет.</p>';
+    body.innerHTML = '<div class="plain-list">' + notesHtml + '</div><div class="note-card new-note"><label>Новая заметка<textarea id="newNoteBody" placeholder="Что важно помнить об этом мероприятии?"></textarea></label><button class="btn success" id="addNote">Добавить</button><p data-status class="status"></p></div>';
+    document.querySelectorAll('[data-save-note]').forEach(function (btn) {
+      btn.onclick = async function () {
+        await api('save_note', { id: btn.dataset.saveNote, body: document.querySelector('[data-note-body="' + btn.dataset.saveNote + '"]').value }, 'POST');
+        await refreshCurrent();
+        await loadNotesIntoModal(event);
+      };
+    });
+    document.querySelectorAll('[data-delete-note]').forEach(function (btn) {
+      btn.onclick = async function () {
+        await api('delete_note', { id: btn.dataset.deleteNote }, 'POST');
+        await refreshCurrent();
+        await loadNotesIntoModal(event);
+      };
+    });
+    document.getElementById('addNote').onclick = async function () {
+      await api('save_note', { event_id: event.id, body: document.getElementById('newNoteBody').value }, 'POST');
+      await refreshCurrent();
+      await loadNotesIntoModal(event);
+    };
+  } catch (err) {
+    body.innerHTML = '<p class="status bad">' + escapeHtml(err.message) + '</p>';
+  }
+}
+
 function val(id) { return document.getElementById(id).value; }
 function closeModal() { var m = document.getElementById('modal'); if (m) m.remove(); }
 
@@ -234,11 +320,23 @@ async function saveEvent(payload) {
 function renderToday() {
   var screen = document.getElementById('screen');
   var list = state.today.map(function (ev) {
-    return '<div class="task-row ' + (ev.completed_at ? 'done' : '') + '"><button class="check" data-toggle="' + ev.id + '" title="Отметить"></button><div><div class="task-title">' + escapeHtml(ev.title) + '</div><div class="meta">' + fmtDate(ev.starts_at) + ' - ' + fmtDate(ev.ends_at) + '</div></div></div>';
+    return '<div class="task-row ' + (ev.completed_at ? 'done' : '') + '" data-open-notes="' + ev.id + '"><button class="check" data-toggle="' + ev.id + '" title="Отметить"></button><div><div class="task-title-row"><span class="task-title">' + escapeHtml(ev.title) + '</span><span class="note-count">' + noteLabel(ev.note_count) + '</span></div><div class="meta">' + fmtDate(ev.starts_at) + ' - ' + fmtDate(ev.ends_at) + '</div></div></div>';
   }).join('') || '<p>На сегодня ничего не запланировано.</p>';
   screen.innerHTML = '<div class="topbar"><div><h1>Today</h1><p>Ежедневник с отметкой выполненных событий.</p></div><button class="icon-btn" id="addToday">+</button></div><section class="panel pad"><div class="today-list">' + list + '</div></section>';
   document.getElementById('addToday').onclick = function () { openEventModal({ date: ymd(new Date()) }); };
-  document.querySelectorAll('[data-toggle]').forEach(function (btn) { btn.onclick = async function () { await api('toggle_event', { id: btn.dataset.toggle }, 'POST'); await loadToday(); }; });
+  document.querySelectorAll('[data-toggle]').forEach(function (btn) {
+    btn.onclick = async function (event) {
+      event.stopPropagation();
+      await api('toggle_event', { id: btn.dataset.toggle }, 'POST');
+      await loadToday();
+    };
+  });
+  document.querySelectorAll('[data-open-notes]').forEach(function (row) {
+    row.onclick = function () {
+      var event = state.today.find(function (ev) { return String(ev.id) === String(row.dataset.openNotes); });
+      openNotesModal(event);
+    };
+  });
 }
 
 function renderProfile() {

@@ -105,16 +105,16 @@ function handle_action(PDO $pdo, array $config, string $action): void
         $to = (new DateTimeImmutable($from))->modify('last day of this month 23:59:59')->format('Y-m-d H:i:s');
         $owners = visible_owner_ids($pdo, $userId, $user['email']);
         $in = implode(',', array_fill(0, count($owners), '?'));
-        $stmt = $pdo->prepare('SELECT e.*, u.name AS owner_name FROM events e JOIN users u ON u.id = e.user_id WHERE e.user_id IN (' . $in . ') AND e.starts_at <= ? AND e.ends_at >= ? ORDER BY e.starts_at');
-        $stmt->execute(array_merge($owners, [$to, $from]));
+        $stmt = $pdo->prepare('SELECT e.*, u.name AS owner_name, COALESCE(n.note_count, 0) AS note_count FROM events e JOIN users u ON u.id = e.user_id LEFT JOIN (SELECT event_id, COUNT(*) AS note_count FROM event_notes WHERE user_id = ? GROUP BY event_id) n ON n.event_id = e.id WHERE e.user_id IN (' . $in . ') AND e.starts_at <= ? AND e.ends_at >= ? ORDER BY e.starts_at');
+        $stmt->execute(array_merge([$userId], $owners, [$to, $from]));
         json_response(['ok' => true, 'events' => $stmt->fetchAll()]);
     }
 
     if ($action === 'today') {
         $start = (new DateTimeImmutable('today'))->format('Y-m-d 00:00:00');
         $end = (new DateTimeImmutable('today'))->format('Y-m-d 23:59:59');
-        $stmt = $pdo->prepare('SELECT * FROM events WHERE user_id = ? AND starts_at <= ? AND ends_at >= ? ORDER BY starts_at');
-        $stmt->execute([$userId, $end, $start]);
+        $stmt = $pdo->prepare('SELECT e.*, COALESCE(n.note_count, 0) AS note_count FROM events e LEFT JOIN (SELECT event_id, COUNT(*) AS note_count FROM event_notes WHERE user_id = ? GROUP BY event_id) n ON n.event_id = e.id WHERE e.user_id = ? AND e.starts_at <= ? AND e.ends_at >= ? ORDER BY e.starts_at');
+        $stmt->execute([$userId, $userId, $end, $start]);
         json_response(['ok' => true, 'events' => $stmt->fetchAll()]);
     }
 
@@ -152,6 +152,55 @@ function handle_action(PDO $pdo, array $config, string $action): void
         $completed = $event['completed_at'] ? null : now();
         $pdo->prepare('UPDATE events SET completed_at = ?, updated_at = ? WHERE id = ? AND user_id = ?')->execute([$completed, now(), $id, $userId]);
         json_response(['ok' => true, 'completed_at' => $completed]);
+    }
+
+    if ($action === 'event_notes') {
+        $eventId = (int) ($_GET['event_id'] ?? $data['event_id'] ?? 0);
+        require_owned_event($pdo, $userId, $eventId);
+        $stmt = $pdo->prepare('SELECT * FROM event_notes WHERE event_id = ? AND user_id = ? ORDER BY updated_at DESC, id DESC');
+        $stmt->execute([$eventId, $userId]);
+        json_response(['ok' => true, 'notes' => $stmt->fetchAll()]);
+    }
+
+    if ($action === 'save_note') {
+        $id = (int) ($data['id'] ?? 0);
+        $eventId = (int) ($data['event_id'] ?? 0);
+        $body = trim((string) ($data['body'] ?? ''));
+        if ($body === '') {
+            json_response(['ok' => false, 'message' => 'Введите текст заметки.'], 422);
+        }
+        if ($id > 0) {
+            $stmt = $pdo->prepare('SELECT event_id FROM event_notes WHERE id = ? AND user_id = ?');
+            $stmt->execute([$id, $userId]);
+            $note = $stmt->fetch();
+            if (!$note) {
+                json_response(['ok' => false, 'message' => 'Заметка не найдена.'], 404);
+            }
+            require_owned_event($pdo, $userId, (int) $note['event_id']);
+            $pdo->prepare('UPDATE event_notes SET body = ?, updated_at = ? WHERE id = ? AND user_id = ?')->execute([$body, now(), $id, $userId]);
+            audit($pdo, $userId, 'note.updated', ['id' => $id]);
+            json_response(['ok' => true, 'note_id' => $id]);
+        }
+        require_owned_event($pdo, $userId, $eventId);
+        $stmt = $pdo->prepare('INSERT INTO event_notes (event_id, user_id, body, created_at, updated_at) VALUES (?, ?, ?, ?, ?)');
+        $stmt->execute([$eventId, $userId, $body, now(), now()]);
+        $id = (int) $pdo->lastInsertId();
+        audit($pdo, $userId, 'note.created', ['id' => $id, 'event_id' => $eventId]);
+        json_response(['ok' => true, 'note_id' => $id]);
+    }
+
+    if ($action === 'delete_note') {
+        $id = (int) ($data['id'] ?? 0);
+        $stmt = $pdo->prepare('SELECT event_id FROM event_notes WHERE id = ? AND user_id = ?');
+        $stmt->execute([$id, $userId]);
+        $note = $stmt->fetch();
+        if (!$note) {
+            json_response(['ok' => false, 'message' => 'Заметка не найдена.'], 404);
+        }
+        require_owned_event($pdo, $userId, (int) $note['event_id']);
+        $pdo->prepare('DELETE FROM event_notes WHERE id = ? AND user_id = ?')->execute([$id, $userId]);
+        audit($pdo, $userId, 'note.deleted', ['id' => $id]);
+        json_response(['ok' => true]);
     }
 
     if ($action === 'settings') {
@@ -294,6 +343,20 @@ function handle_admin_action(PDO $pdo, string $action, array $data): void
         json_response(['ok' => true, 'logs' => $pdo->query('SELECT l.*, u.email FROM audit_logs l LEFT JOIN users u ON u.id = l.user_id ORDER BY l.id DESC LIMIT 200')->fetchAll()]);
     }
     json_response(['ok' => false, 'message' => 'Неизвестное admin-действие.'], 404);
+}
+
+function require_owned_event(PDO $pdo, int $userId, int $eventId): array
+{
+    if ($eventId <= 0) {
+        json_response(['ok' => false, 'message' => 'Выберите мероприятие.'], 422);
+    }
+    $stmt = $pdo->prepare('SELECT * FROM events WHERE id = ? AND user_id = ?');
+    $stmt->execute([$eventId, $userId]);
+    $event = $stmt->fetch();
+    if (!$event) {
+        json_response(['ok' => false, 'message' => 'Мероприятие не найдено.'], 404);
+    }
+    return $event;
 }
 ?>
 <!doctype html>

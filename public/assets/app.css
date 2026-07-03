@@ -141,6 +141,16 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
 .btn.ghost { background: transparent; }
 .btn.danger { color: var(--danger); }
+.btn.success {
+  background: var(--done);
+  color: #fff;
+  border-color: var(--done);
+}
+.btn.warning {
+  background: #f4c542;
+  color: #1f1b10;
+  border-color: #f4c542;
+}
 .icon-btn {
   width: 42px;
   height: 42px;
@@ -269,6 +279,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   gap: 5px;
 }
 .task-row { grid-template-columns: 34px 1fr; align-items: start; }
+.task-row[data-open-notes] { cursor: pointer; }
 .check {
   width: 24px;
   height: 24px;
@@ -278,7 +289,47 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 }
 .task-row.done .check { background: var(--done); border-color: var(--done); }
 .task-row.done .task-title { color: var(--muted); text-decoration: line-through; }
+.task-title-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+.note-count {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
 .meta { color: var(--muted); font-size: 13px; }
+.event-choice {
+  width: 100%;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.note-card {
+  border: 1px solid var(--line);
+  background: var(--panel-strong);
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+.note-card textarea {
+  min-height: 112px;
+  width: 100%;
+}
+.note-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.notes-modal {
+  width: min(680px, 100%);
+}
+.compact-modal {
+  width: min(420px, 100%);
+}
 
 .profile-grid {
   display: grid;
