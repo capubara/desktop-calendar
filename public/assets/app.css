@@ -202,6 +202,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   gap: 18px;
   align-items: start;
 }
+.quick-add-panel {
+  margin-top: 52px;
+}
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -336,6 +339,7 @@ th { color: var(--muted); font-weight: 600; }
   .main { padding: 14px; }
   .topbar { align-items: flex-start; }
   .layout-two, .profile-grid { grid-template-columns: 1fr; }
+  .quick-add-panel { margin-top: 0; }
   .calendar-grid { grid-template-columns: repeat(7, minmax(42px, 1fr)); }
   .calendar-head span { padding: 8px 4px; text-align: center; }
   .day { min-height: 82px; padding: 6px; }
