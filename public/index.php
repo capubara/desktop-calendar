@@ -25,8 +25,12 @@ function handle_action(PDO $pdo, array $config, string $action): void
         $name = trim((string) ($data['name'] ?? ''));
         $email = trim((string) ($data['email'] ?? ''));
         $password = (string) ($data['password'] ?? '');
+        $passwordConfirm = (string) ($data['password_confirm'] ?? '');
         if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 6) {
             json_response(['ok' => false, 'message' => 'Введите имя, корректную почту и пароль от 6 символов.'], 422);
+        }
+        if ($password !== $passwordConfirm) {
+            json_response(['ok' => false, 'message' => 'Пароли не совпадают.'], 422);
         }
         if (find_user_by_email($pdo, $email)) {
             json_response(['ok' => false, 'message' => 'Пользователь с такой почтой уже существует.'], 409);
@@ -42,7 +46,7 @@ function handle_action(PDO $pdo, array $config, string $action): void
         $_SESSION['pending_user_id'] = $userId;
         $_SESSION['pending_purpose'] = 'register';
         $_SESSION['pending_remember'] = true;
-        $_SESSION['pending_device_name'] = 'Компьютер 1';
+        $_SESSION['pending_device_name'] = null;
         audit($pdo, $userId, 'auth.register');
         json_response(['ok' => true, 'message' => 'Код подтверждения отправлен.', 'dev_code' => dev_code($config, $code)]);
     }
@@ -58,7 +62,7 @@ function handle_action(PDO $pdo, array $config, string $action): void
         $_SESSION['pending_user_id'] = (int) $user['id'];
         $_SESSION['pending_purpose'] = 'login';
         $_SESSION['pending_remember'] = !empty($data['remember']);
-        $_SESSION['pending_device_name'] = trim((string) ($data['device_name'] ?? 'Компьютер'));
+        $_SESSION['pending_device_name'] = null;
         audit($pdo, (int) $user['id'], 'auth.login_code_requested');
         json_response(['ok' => true, 'message' => 'Введите код из почты.', 'needs_2fa' => (bool) $settings['twofa_enabled'], 'dev_code' => dev_code($config, $code)]);
     }
@@ -75,7 +79,7 @@ function handle_action(PDO $pdo, array $config, string $action): void
         }
         $_SESSION['user_id'] = $userId;
         if (!empty($_SESSION['pending_remember'])) {
-            remember_device($pdo, $config, $userId, (string) ($_SESSION['pending_device_name'] ?? 'Компьютер'));
+            remember_device($pdo, $config, $userId, $_SESSION['pending_device_name'] ?? null);
         }
         unset($_SESSION['pending_user_id'], $_SESSION['pending_purpose'], $_SESSION['pending_remember'], $_SESSION['pending_device_name']);
         audit($pdo, $userId, 'auth.verified');

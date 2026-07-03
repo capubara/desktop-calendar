@@ -2,6 +2,7 @@ var state = {
   user: null,
   settings: null,
   view: 'calendar',
+  authMode: 'login',
   profile: 'settings',
   month: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   events: [],
@@ -101,7 +102,17 @@ function bindNav() {
 }
 
 function renderAuth() {
-  app.innerHTML = '<div class="auth-shell"><section class="auth-panel"><div class="brand-mark">F</div><div><h1>Fantasia Calendar</h1><p>Календарь, ежедневник и общий доступ в одном desktop-приложении.</p></div><div class="form" id="authForm"><label>Имя<input name="name" placeholder="Иван" autocomplete="name"></label><label>Email<input name="email" type="email" placeholder="you@example.com" autocomplete="email"></label><label>Пароль<input name="password" type="password" placeholder="Минимум 6 символов" autocomplete="current-password"></label><label>Название устройства<input name="device_name" placeholder="Компьютер 1"></label><label class="checkbox"><input name="remember" type="checkbox" checked> Запомнить устройство</label><div class="form-row"><button class="btn primary" data-auth="login">Войти</button><button class="btn" data-auth="register">Регистрация</button></div><p data-status class="status"></p></div><div class="form hidden" id="verifyForm"><label>Код из письма<input name="code" inputmode="numeric" placeholder="123456"></label><label>2FA-код, если включен<input name="totp" inputmode="numeric" placeholder="000000"></label><button class="btn primary" data-auth="verify">Подтвердить</button><p data-status class="status"></p></div></section><section class="auth-preview"><h2>Desktop сейчас, mobile потом</h2><p>Одна верстка перестраивается из широкой сетки календаря в компактный режим с нижней навигацией.</p><div class="preview-grid">' + Array.from({length: 35}).map(function(){ return '<span></span>'; }).join('') + '</div></section></div>';
+  var isRegister = state.authMode === 'register';
+  var fields = isRegister
+    ? '<label>Имя<input name="name" placeholder="Иван" autocomplete="name"></label><label>Email<input name="email" type="email" placeholder="you@example.com" autocomplete="email"></label><label>Пароль<input name="password" type="password" placeholder="Минимум 6 символов" autocomplete="new-password"></label><label>Подтвердить пароль<input name="password_confirm" type="password" placeholder="Повторите пароль" autocomplete="new-password"></label>'
+    : '<label>Email<input name="email" type="email" placeholder="you@example.com" autocomplete="email"></label><label>Пароль<input name="password" type="password" placeholder="Ваш пароль" autocomplete="current-password"></label><label class="checkbox"><input name="remember" type="checkbox" checked> Запомнить устройство</label>';
+  app.innerHTML = '<div class="auth-shell"><section class="auth-panel"><div class="brand-mark">F</div><div><h1>Fantasia Calendar</h1><p>Календарь, ежедневник и общий доступ в одном desktop-приложении.</p></div><div class="auth-tabs"><button class="' + (!isRegister ? 'active' : '') + '" data-auth-mode="login">Вход</button><button class="' + (isRegister ? 'active' : '') + '" data-auth-mode="register">Регистрация</button></div><div class="form" id="authForm">' + fields + '<button class="btn primary" data-auth="' + (isRegister ? 'register' : 'login') + '">' + (isRegister ? 'Зарегистрироваться' : 'Войти') + '</button><p data-status class="status"></p></div><div class="form hidden" id="verifyForm"><label>Код из письма<input name="code" inputmode="numeric" placeholder="123456"></label><label>2FA-код, если включен<input name="totp" inputmode="numeric" placeholder="000000"></label><button class="btn primary" data-auth="verify">Подтвердить</button><p data-status class="status"></p></div></section><section class="auth-preview"><h2>Desktop сейчас, mobile потом</h2><p>Одна верстка перестраивается из широкой сетки календаря в компактный режим с нижней навигацией.</p><div class="preview-grid">' + Array.from({length: 35}).map(function(){ return '<span></span>'; }).join('') + '</div></section></div>';
+  document.querySelectorAll('[data-auth-mode]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      state.authMode = btn.dataset.authMode;
+      renderAuth();
+    });
+  });
   document.querySelectorAll('[data-auth]').forEach(function (btn) {
     btn.addEventListener('click', function () { handleAuth(btn.dataset.auth); });
   });
@@ -111,18 +122,32 @@ async function handleAuth(type) {
   try {
     if (type === 'verify') {
       var vf = document.getElementById('verifyForm');
-      await api('verify', Object.fromEntries(new FormData(vf)), 'POST');
+      await api('verify', readFields(vf), 'POST');
       await boot();
       return;
     }
     var form = document.getElementById('authForm');
-    var payload = Object.fromEntries(new FormData(form));
-    payload.remember = !!form.querySelector('[name="remember"]').checked;
+    var payload = readFields(form);
+    if (type === 'register' && payload.password !== payload.password_confirm) {
+      notify('Пароли не совпадают.', false);
+      return;
+    }
+    var remember = form.querySelector('[name="remember"]');
+    payload.remember = remember ? !!remember.checked : true;
     var res = await api(type, payload, 'POST');
     document.getElementById('authForm').classList.add('hidden');
     document.getElementById('verifyForm').classList.remove('hidden');
     notify(res.message + (res.dev_code ? ' Демо-код: ' + res.dev_code : ''), true);
   } catch (err) { notify(err.message, false); }
+}
+
+function readFields(root) {
+  var data = {};
+  root.querySelectorAll('input, select, textarea').forEach(function (field) {
+    if (!field.name) return;
+    data[field.name] = field.type === 'checkbox' ? field.checked : field.value;
+  });
+  return data;
 }
 
 function renderScreen() {

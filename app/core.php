@@ -216,17 +216,62 @@ function verify_login_code(PDO $pdo, int $userId, string $code, string $purpose)
     return false;
 }
 
-function remember_device(PDO $pdo, array $config, int $userId, string $deviceName): void
+function remember_device(PDO $pdo, array $config, int $userId, ?string $deviceName = null): void
 {
     $token = bin2hex(random_bytes(32));
+    $deviceName = trim((string) $deviceName);
+    if ($deviceName === '') {
+        $deviceName = next_device_name($pdo, $userId);
+    }
     $stmt = $pdo->prepare('INSERT INTO trusted_devices (user_id, device_name, token_hash, first_seen, last_seen, user_agent) VALUES (?, ?, ?, ?, ?, ?)');
-    $stmt->execute([$userId, trim($deviceName) ?: 'Компьютер', hash('sha256', $token), now(), now(), $_SERVER['HTTP_USER_AGENT'] ?? '']);
+    $stmt->execute([$userId, $deviceName, hash('sha256', $token), now(), now(), $_SERVER['HTTP_USER_AGENT'] ?? '']);
     setcookie('fantasia_device', $userId . ':' . $token, [
         'expires' => time() + 86400 * (int) $config['security']['remember_days'],
         'path' => '/',
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
+}
+
+function next_device_name(PDO $pdo, int $userId): string
+{
+    $family = detect_device_family($_SERVER['HTTP_USER_AGENT'] ?? '');
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM trusted_devices WHERE user_id = ? AND device_name LIKE ?');
+    $stmt->execute([$userId, $family . '%']);
+    $count = (int) $stmt->fetchColumn();
+    return $count === 0 ? $family : $family . ' ' . ($count + 1);
+}
+
+function detect_device_family(string $userAgent): string
+{
+    $ua = lower_text($userAgent);
+    if (str_contains($ua, 'android')) {
+        return 'Android';
+    }
+    if (str_contains($ua, 'iphone')) {
+        return 'iPhone';
+    }
+    if (str_contains($ua, 'ipad')) {
+        return 'iPad';
+    }
+    if (str_contains($ua, 'windows')) {
+        return 'Windows';
+    }
+    if (str_contains($ua, 'macintosh') || str_contains($ua, 'mac os')) {
+        return 'macOS';
+    }
+    if (str_contains($ua, 'linux')) {
+        return 'Linux';
+    }
+    return 'Устройство';
+}
+
+function lower_text(string $value): string
+{
+    if (function_exists('mb_strtolower')) {
+        return mb_strtolower($value, 'UTF-8');
+    }
+    return strtolower($value);
 }
 
 function auto_login_from_device(PDO $pdo, array $config): void
@@ -315,7 +360,7 @@ function month_number(string $month): int
         'nov' => 11, 'november' => 11, 'ноябрь' => 11, 'ноября' => 11,
         'dec' => 12, 'december' => 12, 'декабрь' => 12, 'декабря' => 12,
     ];
-    return $map[mb_strtolower($month)] ?? (int) date('n');
+    return $map[lower_text($month)] ?? (int) date('n');
 }
 
 function normalize_time(string $time): string

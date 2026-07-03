@@ -90,6 +90,27 @@ h1, h2, h3 { margin: 0; letter-spacing: 0; }
 p { margin: 0; color: var(--muted); line-height: 1.55; }
 .form { display: grid; gap: 12px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--soft);
+}
+.auth-tabs button {
+  border: 0;
+  border-radius: 8px;
+  min-height: 40px;
+  background: transparent;
+  color: var(--muted);
+}
+.auth-tabs button.active {
+  background: var(--panel-strong);
+  color: var(--text);
+  box-shadow: 0 6px 18px rgba(42, 38, 32, .08);
+}
 label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
 input, select, textarea {
   border: 1px solid var(--line);
