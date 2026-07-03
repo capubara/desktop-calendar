@@ -136,7 +136,13 @@ function handle_action(PDO $pdo, array $config, string $action): void
 
     if ($action === 'delete_event') {
         $id = (int) ($data['id'] ?? 0);
-        $pdo->prepare('DELETE FROM events WHERE id = ? AND user_id = ?')->execute([$id, $userId]);
+        $event = require_owned_event($pdo, $userId, $id);
+        $deleteDate = preg_replace('/[^0-9\-]/', '', (string) ($data['date'] ?? ''));
+        if ($deleteDate !== '') {
+            delete_event_occurrence($pdo, $event, $deleteDate);
+        } else {
+            $pdo->prepare('DELETE FROM events WHERE id = ? AND user_id = ?')->execute([$id, $userId]);
+        }
         audit($pdo, $userId, 'event.deleted', ['id' => $id]);
         json_response(['ok' => true]);
     }
@@ -357,6 +363,53 @@ function require_owned_event(PDO $pdo, int $userId, int $eventId): array
         json_response(['ok' => false, 'message' => 'Мероприятие не найдено.'], 404);
     }
     return $event;
+}
+
+function delete_event_occurrence(PDO $pdo, array $event, string $deleteDate): void
+{
+    $startDate = substr((string) $event['starts_at'], 0, 10);
+    $endDate = substr((string) $event['ends_at'], 0, 10);
+    if ($deleteDate < $startDate || $deleteDate > $endDate) {
+        json_response(['ok' => false, 'message' => 'В выбранный день этого события нет.'], 422);
+    }
+    if ($startDate === $endDate) {
+        $pdo->prepare('DELETE FROM events WHERE id = ? AND user_id = ?')->execute([$event['id'], $event['user_id']]);
+        return;
+    }
+
+    $isAllDay = (int) $event['is_all_day'] === 1;
+    if ($deleteDate === $startDate) {
+        $newStart = date_shift($deleteDate, '+1 day') . ($isAllDay ? ' 00:00:00' : substr((string) $event['starts_at'], 10));
+        $pdo->prepare('UPDATE events SET starts_at = ?, updated_at = ? WHERE id = ? AND user_id = ?')->execute([$newStart, now(), $event['id'], $event['user_id']]);
+        return;
+    }
+    if ($deleteDate === $endDate) {
+        $newEnd = date_shift($deleteDate, '-1 day') . ($isAllDay ? ' 23:59:00' : substr((string) $event['ends_at'], 10));
+        $pdo->prepare('UPDATE events SET ends_at = ?, updated_at = ? WHERE id = ? AND user_id = ?')->execute([$newEnd, now(), $event['id'], $event['user_id']]);
+        return;
+    }
+
+    $beforeEnd = date_shift($deleteDate, '-1 day') . ($isAllDay ? ' 23:59:00' : substr((string) $event['ends_at'], 10));
+    $afterStart = date_shift($deleteDate, '+1 day') . ($isAllDay ? ' 00:00:00' : substr((string) $event['starts_at'], 10));
+    $pdo->prepare('UPDATE events SET ends_at = ?, updated_at = ? WHERE id = ? AND user_id = ?')->execute([$beforeEnd, now(), $event['id'], $event['user_id']]);
+    $stmt = $pdo->prepare('INSERT INTO events (user_id, title, starts_at, ends_at, is_all_day, source_text, color, completed_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt->execute([
+        $event['user_id'],
+        $event['title'],
+        $afterStart,
+        $event['ends_at'],
+        $event['is_all_day'],
+        $event['source_text'],
+        $event['color'],
+        null,
+        now(),
+        now(),
+    ]);
+}
+
+function date_shift(string $date, string $modifier): string
+{
+    return (new DateTimeImmutable($date))->modify($modifier)->format('Y-m-d');
 }
 ?>
 <!doctype html>

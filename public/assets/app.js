@@ -28,6 +28,15 @@ function ymd(date) {
   return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
 }
 
+function datePart(value) {
+  return String(value || '').slice(0, 10);
+}
+
+function timePart(value, fallback) {
+  var time = String(value || '').slice(11, 16);
+  return time && time.length === 5 ? time : fallback;
+}
+
 function noteLabel(count) {
   count = Number(count || 0);
   if (count % 10 === 1 && count % 100 !== 11) return count + ' заметка';
@@ -208,11 +217,17 @@ function drawCalendar() {
     d.setDate(start.getDate() + i);
     var key = ymd(d);
     var dayEvents = eventsForDate(key, true);
-    html += '<button class="day ' + (d.getMonth() !== state.month.getMonth() ? 'muted ' : '') + (key === today ? 'today' : '') + '" data-date="' + key + '"><span class="num">' + d.getDate() + '</span>' + dayEvents.slice(0, 3).map(function (ev) { return '<span class="event-pill" style="border-left-color:' + escapeHtml(ev.color || state.settings.palette) + '">' + escapeHtml(ev.title) + '</span>'; }).join('') + '</button>';
+    html += '<button class="day ' + (d.getMonth() !== state.month.getMonth() ? 'muted ' : '') + (key === today ? 'today' : '') + '" data-date="' + key + '"><span class="num">' + d.getDate() + '</span>' + dayEvents.slice(0, 3).map(function (ev) { return '<span class="event-pill" data-calendar-event="' + ev.id + '" style="border-left-color:' + escapeHtml(ev.color || state.settings.palette) + '">' + escapeHtml(ev.title) + '</span>'; }).join('') + '</button>';
   }
   grid.innerHTML = html;
   grid.querySelectorAll('.day').forEach(function (day) {
-    day.onclick = function () {
+    day.onclick = function (clickEvent) {
+      var eventPill = clickEvent.target.closest('[data-calendar-event]');
+      if (eventPill) {
+        var event = state.events.find(function (ev) { return String(ev.id) === String(eventPill.dataset.calendarEvent); });
+        if (event && Number(event.user_id) === Number(state.user.id)) openEventModal(event, day.dataset.date);
+        return;
+      }
       var dayEvents = eventsForDate(day.dataset.date, false).filter(function (ev) { return Number(ev.user_id) === Number(state.user.id); });
       if (dayEvents.length > 0) openDayActionModal(day.dataset.date, dayEvents);
       else openEventModal({ date: day.dataset.date });
@@ -230,40 +245,67 @@ function eventsForDate(date, useSearch) {
 }
 
 function openDayActionModal(date, events) {
-  var html = '<div class="modal-backdrop" id="modal"><div class="modal compact-modal"><div class="topbar"><h2>Что добавить?</h2><button class="icon-btn" id="closeModal">×</button></div><p>В этом дне уже есть мероприятия. Выберите, что хотите добавить.</p><div class="form-row"><button class="btn primary" id="dayAddEvent">Событие</button><button class="btn success" id="dayAddNote">Заметку</button></div></div></div>';
+  var html = '<div class="modal-backdrop" id="modal"><div class="modal compact-modal"><div class="topbar"><h2>Что добавить?</h2><button class="icon-btn" id="closeModal">×</button></div><p>В этом дне уже есть мероприятия. Выберите, что хотите добавить.</p><div class="form-row"><button class="btn success" id="dayAddEvent">Событие</button><button class="btn warning" id="dayAddNote">Заметку</button></div></div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
   document.getElementById('closeModal').onclick = closeModal;
   document.getElementById('dayAddEvent').onclick = function () { closeModal(); openEventModal({ date: date }); };
   document.getElementById('dayAddNote').onclick = function () {
     closeModal();
     if (events.length === 1) openNotesModal(events[0]);
-    else openEventPickerModal(date, events);
+    else openEventPickerModal(date, events, 'note');
   };
 }
 
-function openEventPickerModal(date, events) {
+function openEventPickerModal(date, events, mode) {
+  mode = mode || 'note';
   var rows = events.map(function (ev) {
-    return '<button class="list-row event-choice" data-note-event="' + ev.id + '"><strong>' + escapeHtml(ev.title) + '</strong><span class="meta">' + fmtDate(ev.starts_at) + ' - ' + fmtDate(ev.ends_at) + '</span></button>';
+    return '<button class="list-row event-choice" data-pick-event="' + ev.id + '"><strong>' + escapeHtml(ev.title) + '</strong><span class="meta">' + fmtDate(ev.starts_at) + ' - ' + fmtDate(ev.ends_at) + '</span></button>';
   }).join('');
-  var html = '<div class="modal-backdrop" id="modal"><div class="modal"><div class="topbar"><h2>Выберите мероприятие</h2><button class="icon-btn" id="closeModal">×</button></div><div class="plain-list">' + rows + '</div></div></div>';
+  var title = mode === 'delete' ? 'Что удалить?' : 'Выберите мероприятие';
+  var html = '<div class="modal-backdrop" id="modal"><div class="modal"><div class="topbar"><h2>' + title + '</h2><button class="icon-btn" id="closeModal">×</button></div><div class="plain-list">' + rows + '</div></div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
   document.getElementById('closeModal').onclick = closeModal;
-  document.querySelectorAll('[data-note-event]').forEach(function (btn) {
+  document.querySelectorAll('[data-pick-event]').forEach(function (btn) {
     btn.onclick = function () {
-      var event = events.find(function (ev) { return String(ev.id) === String(btn.dataset.noteEvent); });
+      var event = events.find(function (ev) { return String(ev.id) === String(btn.dataset.pickEvent); });
       closeModal();
-      openNotesModal(event);
+      if (mode === 'delete') openDeleteEventModal(event, date);
+      else openNotesModal(event);
     };
   });
 }
 
-function openEventModal(event) {
+function openEventModal(event, selectedDate) {
   event = event || {};
-  var html = '<div class="modal-backdrop" id="modal"><div class="modal"><div class="topbar"><h2>Событие</h2><button class="icon-btn" id="closeModal">×</button></div><div class="form"><label>Свободный ввод<input id="natural" placeholder="10 July, 13.00, 15:00, Mam Birthday"></label><label>Название<input id="title" value="' + escapeHtml(event.title || '') + '"></label><div class="form-row"><label>Дата<input id="date" type="date" value="' + escapeHtml(event.date || '') + '"></label><label>Цвет<input id="color" type="color" value="' + escapeHtml(event.color || state.settings.palette || '#e85d75') + '"></label></div><div class="form-row"><label>Начало<input id="start_time" type="time" value="09:00"></label><label>Конец<input id="end_time" type="time" value="10:00"></label></div><button class="btn primary" id="saveEvent">Сохранить</button><p data-status class="status"></p></div></div></div>';
+  var isEdit = !!event.id;
+  var eventDate = event.date || datePart(event.starts_at);
+  var startTime = timePart(event.starts_at, '09:00');
+  var endTime = timePart(event.ends_at, '10:00');
+  var deleteButton = isEdit ? '<button class="btn danger" id="deleteEvent">Удалить событие</button>' : '';
+  var html = '<div class="modal-backdrop" id="modal"><div class="modal"><div class="topbar"><h2>' + (isEdit ? 'Редактирование события' : 'Событие') + '</h2><button class="icon-btn" id="closeModal">×</button></div><div class="form"><label>Свободный ввод<input id="natural" placeholder="10 July, 13.00, 15:00, Mam Birthday"></label><label>Название<input id="title" value="' + escapeHtml(event.title || '') + '"></label><div class="form-row"><label>Дата<input id="date" type="date" value="' + escapeHtml(eventDate || '') + '"></label><label>Цвет<input id="color" type="color" value="' + escapeHtml(event.color || state.settings.palette || '#e85d75') + '"></label></div><div class="form-row"><label>Начало<input id="start_time" type="time" value="' + escapeHtml(startTime) + '"></label><label>Конец<input id="end_time" type="time" value="' + escapeHtml(endTime) + '"></label></div><div class="event-modal-actions"><button class="btn primary" id="saveEvent">Сохранить</button>' + deleteButton + '</div><p data-status class="status"></p></div></div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
   document.getElementById('closeModal').onclick = closeModal;
   document.getElementById('saveEvent').onclick = async function () {
-    await saveEvent({ natural: val('natural'), title: val('title'), date: val('date'), start_time: val('start_time'), end_time: val('end_time'), color: val('color') });
+    await saveEvent({ id: event.id || 0, natural: val('natural'), title: val('title'), date: val('date'), start_time: val('start_time'), end_time: val('end_time'), color: val('color') });
+    closeModal();
+  };
+  if (isEdit) {
+    document.getElementById('deleteEvent').onclick = function () {
+      closeModal();
+      openDeleteEventModal(event, selectedDate);
+    };
+  }
+}
+
+function openDeleteEventModal(event, selectedDate) {
+  if (!event) return;
+  var dayText = selectedDate ? '<p class="meta">Выбранный день: ' + escapeHtml(selectedDate) + '</p>' : '';
+  var html = '<div class="modal-backdrop" id="modal"><div class="modal compact-modal"><div class="topbar"><h2>Удалить событие?</h2><button class="icon-btn" id="closeModal">×</button></div><p><strong>' + escapeHtml(event.title) + '</strong></p>' + dayText + '<p>Будет удалено только выбранное мероприятие или выбранный день многодневного мероприятия. Его заметки удалятся только при полном удалении события.</p><div class="form-row"><button class="btn ghost" id="cancelDeleteEvent">Отмена</button><button class="btn danger" id="confirmDeleteEvent">Удалить</button></div><p data-status class="status"></p></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  document.getElementById('closeModal').onclick = closeModal;
+  document.getElementById('cancelDeleteEvent').onclick = closeModal;
+  document.getElementById('confirmDeleteEvent').onclick = async function () {
+    await deleteEvent(event.id, selectedDate);
     closeModal();
   };
 }
@@ -313,8 +355,18 @@ function val(id) { return document.getElementById(id).value; }
 function closeModal() { var m = document.getElementById('modal'); if (m) m.remove(); }
 
 async function saveEvent(payload) {
-  try { await api('save_event', payload, 'POST'); await loadEvents(); notify('Событие сохранено.', true); }
+  try { await api('save_event', payload, 'POST'); await refreshCurrent(); notify('Событие сохранено.', true); }
   catch (err) { notify(err.message, false); }
+}
+
+async function deleteEvent(id, selectedDate) {
+  try {
+    await api('delete_event', { id: id, date: selectedDate || '' }, 'POST');
+    await refreshCurrent();
+    notify('Событие удалено.', true);
+  } catch (err) {
+    notify(err.message, false);
+  }
 }
 
 function renderToday() {
@@ -335,6 +387,11 @@ function renderToday() {
     row.onclick = function () {
       var event = state.today.find(function (ev) { return String(ev.id) === String(row.dataset.openNotes); });
       openNotesModal(event);
+    };
+    row.oncontextmenu = function (mouseEvent) {
+      mouseEvent.preventDefault();
+      var event = state.today.find(function (ev) { return String(ev.id) === String(row.dataset.openNotes); });
+      openDeleteEventModal(event, ymd(new Date()));
     };
   });
 }

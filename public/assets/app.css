@@ -90,6 +90,18 @@ h1, h2, h3 { margin: 0; letter-spacing: 0; }
 p { margin: 0; color: var(--muted); line-height: 1.55; }
 .form { display: grid; gap: 12px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.action-grid {
+  display: grid;
+  gap: 10px;
+}
+.three-actions {
+  grid-template-columns: repeat(3, 1fr);
+}
+.event-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
 .auth-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -140,7 +152,11 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 }
 .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
 .btn.ghost { background: transparent; }
-.btn.danger { color: var(--danger); }
+.btn.danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
 .btn.success {
   background: var(--done);
   color: #fff;
@@ -328,7 +344,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   width: min(680px, 100%);
 }
 .compact-modal {
-  width: min(420px, 100%);
+  width: min(560px, 100%);
 }
 
 .profile-grid {
@@ -397,6 +413,7 @@ th { color: var(--muted); font-weight: 600; }
   .event-pill { font-size: 11px; padding: 5px; }
   .search { min-width: 100%; }
   .form-row { grid-template-columns: 1fr; }
+  .three-actions, .event-modal-actions { grid-template-columns: 1fr; }
   .bottom-nav {
     position: fixed;
     left: 0;
