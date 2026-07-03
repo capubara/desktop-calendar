@@ -13,6 +13,463 @@ var state = {
 
 var app = document.getElementById('app');
 
+var locales = {
+  ru: 'ru-RU',
+  en: 'en-US',
+  de: 'de-DE',
+  fr: 'fr-FR'
+};
+
+var i18n = {
+  en: {
+    'Календарь': 'Calendar',
+    'Профиль': 'Profile',
+    'Выйти': 'Log out',
+    'Календарь, ежедневник и общий доступ в одном desktop-приложении.': 'Calendar, daily planner and shared access in one desktop app.',
+    'Вход': 'Sign in',
+    'Регистрация': 'Sign up',
+    'Имя': 'Name',
+    'Иван': 'John',
+    'Пароль': 'Password',
+    'Минимум 6 символов': 'At least 6 characters',
+    'Подтвердить пароль': 'Confirm password',
+    'Повторите пароль': 'Repeat password',
+    'Ваш пароль': 'Your password',
+    'Запомнить устройство': 'Remember this device',
+    'Зарегистрироваться': 'Create account',
+    'Войти': 'Sign in',
+    'Код из письма': 'Email code',
+    '2FA-код, если включен': '2FA code, if enabled',
+    'Подтвердить': 'Confirm',
+    'Desktop сейчас, mobile потом': 'Desktop now, mobile later',
+    'Одна верстка перестраивается из широкой сетки календаря в компактный режим с нижней навигацией.': 'One layout adapts from a wide calendar grid to a compact mode with bottom navigation.',
+    'Добавляйте точные события или вводите их свободным текстом.': 'Add exact events or type them as natural text.',
+    'Поиск': 'Search',
+    'Предыдущий месяц': 'Previous month',
+    'Следующий месяц': 'Next month',
+    'Быстрое добавление': 'Quick add',
+    'Примеры: 10 July, 13.00, 15:00, Mam Birthday или 13-16 July, Holiday.': 'Examples: 10 July, 13.00, 15:00, Mom Birthday or 13-16 July, Holiday.',
+    'Естественный ввод': 'Natural input',
+    'Добавить': 'Add',
+    'Пн': 'Mon',
+    'Вт': 'Tue',
+    'Ср': 'Wed',
+    'Чт': 'Thu',
+    'Пт': 'Fri',
+    'Сб': 'Sat',
+    'Вс': 'Sun',
+    'Что добавить?': 'What to add?',
+    'В этом дне уже есть мероприятия. Выберите, что хотите добавить.': 'This day already has events. Choose what you want to add.',
+    'Событие': 'Event',
+    'Заметку': 'Note',
+    'Выберите мероприятие': 'Choose an event',
+    'Редактирование события': 'Edit event',
+    'Свободный ввод': 'Natural input',
+    'Название': 'Title',
+    'Дата': 'Date',
+    'Цвет': 'Color',
+    'Начало': 'Start',
+    'Конец': 'End',
+    'Сохранить': 'Save',
+    'Удалить событие': 'Delete event',
+    'Удалить событие?': 'Delete event?',
+    'Выбранный день:': 'Selected day:',
+    'Будет удалено только выбранное мероприятие или выбранный день многодневного мероприятия. Его заметки удалятся только при полном удалении события.': 'Only the selected event or selected day of a multi-day event will be deleted. Notes are deleted only when the whole event is deleted.',
+    'Отмена': 'Cancel',
+    'Удалить': 'Delete',
+    'Заметки': 'Notes',
+    'Загрузка...': 'Loading...',
+    'Обновлено:': 'Updated:',
+    'Новая заметка': 'New note',
+    'Что важно помнить об этом мероприятии?': 'What is important to remember about this event?',
+    'Изменить': 'Edit',
+    'Заметок пока нет.': 'No notes yet.',
+    'На сегодня ничего не запланировано.': 'Nothing planned for today.',
+    'Ежедневник с отметкой выполненных событий.': 'Daily planner with completion marks.',
+    'Отметить': 'Mark done',
+    'Личный кабинет': 'Account',
+    'Все модули профиля сделаны отдельными кнопками-разделами.': 'All profile modules are separate section buttons.',
+    'Настройки': 'Settings',
+    'Устройства': 'Devices',
+    'Конфиденциальность': 'Privacy',
+    'Язык': 'Language',
+    'Иконка': 'Icon',
+    'Помощь': 'Help',
+    'Доступ': 'Sharing',
+    'Тема': 'Theme',
+    'Светлая': 'Light',
+    'Темная': 'Dark',
+    'Цвет календаря': 'Calendar color',
+    'Русский': 'Russian',
+    'Иконка приложения': 'App icon',
+    'Отключить можно первое устройство или устройство, добавленное больше года назад.': 'You can revoke the first device or a device added more than a year ago.',
+    'Первый вход:': 'First seen:',
+    'Последний вход:': 'Last seen:',
+    'Отключено:': 'Revoked:',
+    'Отключить': 'Revoke',
+    'Новый пароль': 'New password',
+    'Изменить пароль': 'Change password',
+    'Настроить 2FA': 'Set up 2FA',
+    'Отключить 2FA': 'Disable 2FA',
+    'Тема обращения': 'Subject',
+    'Сообщение': 'Message',
+    'Отправить': 'Send',
+    'Доступ к календарю': 'Calendar sharing',
+    'Email пользователя': 'User email',
+    'Пригласить': 'Invite',
+    'Принять приглашение по токену': 'Accept invitation by token',
+    'Принять': 'Accept',
+    'Статус:': 'Status:',
+    'Токен:': 'Token:',
+    'Панель администратора для управления данными проекта.': 'Admin panel for managing project data.',
+    'Сводка': 'Summary',
+    'Пользователи': 'Users',
+    'События': 'Events',
+    'Приглашения': 'Invites',
+    'Поддержка': 'Support',
+    'Логи': 'Logs',
+    'Новые обращения': 'New requests',
+    'Данных пока нет.': 'No data yet.',
+    'Пароли не совпадают.': 'Passwords do not match.',
+    'Событие сохранено.': 'Event saved.',
+    'Событие удалено.': 'Event deleted.',
+    'Настройки сохранены.': 'Settings saved.',
+    'Пароль изменен.': 'Password changed.',
+    '2FA включена.': '2FA enabled.',
+    '2FA отключена.': '2FA disabled.',
+    'Обращение отправлено.': 'Support request sent.',
+    'Доступ принят.': 'Access accepted.',
+    'Демо-код:': 'Demo code:'
+    ,
+    'Код подтверждения отправлен.': 'Confirmation code sent.',
+    'Введите код из почты.': 'Enter the email code.',
+    'Вы вошли в аккаунт.': 'You are signed in.',
+    'Неверная почта или пароль.': 'Wrong email or password.',
+    'Код не подошел или устарел.': 'The code is incorrect or expired.',
+    'Введите имя, корректную почту и пароль от 6 символов.': 'Enter a name, a valid email and a password of at least 6 characters.',
+    'Пользователь с такой почтой уже существует.': 'A user with this email already exists.'
+  },
+  de: {
+    'Календарь': 'Kalender',
+    'Профиль': 'Profil',
+    'Выйти': 'Abmelden',
+    'Календарь, ежедневник и общий доступ в одном desktop-приложении.': 'Kalender, Tagesplaner und Freigabe in einer Desktop-App.',
+    'Вход': 'Anmelden',
+    'Регистрация': 'Registrieren',
+    'Имя': 'Name',
+    'Иван': 'Max',
+    'Пароль': 'Passwort',
+    'Минимум 6 символов': 'Mindestens 6 Zeichen',
+    'Подтвердить пароль': 'Passwort bestätigen',
+    'Повторите пароль': 'Passwort wiederholen',
+    'Ваш пароль': 'Ihr Passwort',
+    'Запомнить устройство': 'Gerät merken',
+    'Зарегистрироваться': 'Konto erstellen',
+    'Войти': 'Anmelden',
+    'Код из письма': 'E-Mail-Code',
+    '2FA-код, если включен': '2FA-Code, falls aktiviert',
+    'Подтвердить': 'Bestätigen',
+    'Desktop сейчас, mobile потом': 'Desktop jetzt, mobil später',
+    'Одна верстка перестраивается из широкой сетки календаря в компактный режим с нижней навигацией.': 'Ein Layout passt sich vom breiten Kalender zur kompakten Ansicht mit unterer Navigation an.',
+    'Добавляйте точные события или вводите их свободным текстом.': 'Fügen Sie genaue Termine hinzu oder geben Sie sie frei ein.',
+    'Поиск': 'Suche',
+    'Предыдущий месяц': 'Vorheriger Monat',
+    'Следующий месяц': 'Nächster Monat',
+    'Быстрое добавление': 'Schnell hinzufügen',
+    'Примеры: 10 July, 13.00, 15:00, Mam Birthday или 13-16 July, Holiday.': 'Beispiele: 10 July, 13.00, 15:00, Mom Birthday oder 13-16 July, Holiday.',
+    'Естественный ввод': 'Natürliche Eingabe',
+    'Добавить': 'Hinzufügen',
+    'Пн': 'Mo',
+    'Вт': 'Di',
+    'Ср': 'Mi',
+    'Чт': 'Do',
+    'Пт': 'Fr',
+    'Сб': 'Sa',
+    'Вс': 'So',
+    'Что добавить?': 'Was hinzufügen?',
+    'В этом дне уже есть мероприятия. Выберите, что хотите добавить.': 'An diesem Tag gibt es bereits Termine. Wählen Sie, was Sie hinzufügen möchten.',
+    'Событие': 'Termin',
+    'Заметку': 'Notiz',
+    'Выберите мероприятие': 'Termin wählen',
+    'Редактирование события': 'Termin bearbeiten',
+    'Свободный ввод': 'Freie Eingabe',
+    'Название': 'Titel',
+    'Дата': 'Datum',
+    'Цвет': 'Farbe',
+    'Начало': 'Start',
+    'Конец': 'Ende',
+    'Сохранить': 'Speichern',
+    'Удалить событие': 'Termin löschen',
+    'Удалить событие?': 'Termin löschen?',
+    'Выбранный день:': 'Gewählter Tag:',
+    'Будет удалено только выбранное мероприятие или выбранный день многодневного мероприятия. Его заметки удалятся только при полном удалении события.': 'Nur der gewählte Termin oder Tag eines mehrtägigen Termins wird gelöscht. Notizen werden nur beim vollständigen Löschen entfernt.',
+    'Отмена': 'Abbrechen',
+    'Удалить': 'Löschen',
+    'Заметки': 'Notizen',
+    'Загрузка...': 'Laden...',
+    'Обновлено:': 'Aktualisiert:',
+    'Новая заметка': 'Neue Notiz',
+    'Что важно помнить об этом мероприятии?': 'Was ist bei diesem Termin wichtig?',
+    'Изменить': 'Ändern',
+    'Заметок пока нет.': 'Noch keine Notizen.',
+    'На сегодня ничего не запланировано.': 'Für heute ist nichts geplant.',
+    'Ежедневник с отметкой выполненных событий.': 'Tagesplaner mit Erledigt-Markierungen.',
+    'Отметить': 'Markieren',
+    'Личный кабинет': 'Konto',
+    'Все модули профиля сделаны отдельными кнопками-разделами.': 'Alle Profilmodule sind eigene Bereiche.',
+    'Настройки': 'Einstellungen',
+    'Устройства': 'Geräte',
+    'Конфиденциальность': 'Datenschutz',
+    'Язык': 'Sprache',
+    'Иконка': 'Symbol',
+    'Помощь': 'Hilfe',
+    'Доступ': 'Freigabe',
+    'Тема': 'Design',
+    'Светлая': 'Hell',
+    'Темная': 'Dunkel',
+    'Цвет календаря': 'Kalenderfarbe',
+    'Русский': 'Russisch',
+    'Иконка приложения': 'App-Symbol',
+    'Отключить можно первое устройство или устройство, добавленное больше года назад.': 'Sie können das erste Gerät oder ein Gerät löschen, das vor über einem Jahr hinzugefügt wurde.',
+    'Первый вход:': 'Erster Login:',
+    'Последний вход:': 'Letzter Login:',
+    'Отключено:': 'Deaktiviert:',
+    'Отключить': 'Deaktivieren',
+    'Новый пароль': 'Neues Passwort',
+    'Изменить пароль': 'Passwort ändern',
+    'Настроить 2FA': '2FA einrichten',
+    'Отключить 2FA': '2FA deaktivieren',
+    'Тема обращения': 'Betreff',
+    'Сообщение': 'Nachricht',
+    'Отправить': 'Senden',
+    'Доступ к календарю': 'Kalenderfreigabe',
+    'Email пользователя': 'Benutzer-E-Mail',
+    'Пригласить': 'Einladen',
+    'Принять приглашение по токену': 'Einladung per Token annehmen',
+    'Принять': 'Annehmen',
+    'Статус:': 'Status:',
+    'Токен:': 'Token:',
+    'Панель администратора для управления данными проекта.': 'Adminbereich zur Verwaltung der Projektdaten.',
+    'Сводка': 'Übersicht',
+    'Пользователи': 'Benutzer',
+    'События': 'Termine',
+    'Приглашения': 'Einladungen',
+    'Поддержка': 'Support',
+    'Логи': 'Logs',
+    'Новые обращения': 'Neue Anfragen',
+    'Данных пока нет.': 'Noch keine Daten.',
+    'Пароли не совпадают.': 'Passwörter stimmen nicht überein.',
+    'Событие сохранено.': 'Termin gespeichert.',
+    'Событие удалено.': 'Termin gelöscht.',
+    'Настройки сохранены.': 'Einstellungen gespeichert.',
+    'Пароль изменен.': 'Passwort geändert.',
+    '2FA включена.': '2FA aktiviert.',
+    '2FA отключена.': '2FA deaktiviert.',
+    'Обращение отправлено.': 'Anfrage gesendet.',
+    'Доступ принят.': 'Zugriff angenommen.',
+    'Демо-код:': 'Demo-Code:'
+    ,
+    'Код подтверждения отправлен.': 'Bestätigungscode gesendet.',
+    'Введите код из почты.': 'Geben Sie den E-Mail-Code ein.',
+    'Вы вошли в аккаунт.': 'Sie sind angemeldet.',
+    'Неверная почта или пароль.': 'Falsche E-Mail oder falsches Passwort.',
+    'Код не подошел или устарел.': 'Der Code ist falsch oder abgelaufen.',
+    'Введите имя, корректную почту и пароль от 6 символов.': 'Geben Sie Name, gültige E-Mail und ein Passwort ab 6 Zeichen ein.',
+    'Пользователь с такой почтой уже существует.': 'Ein Benutzer mit dieser E-Mail existiert bereits.'
+  },
+  fr: {
+    'Календарь': 'Calendrier',
+    'Профиль': 'Profil',
+    'Выйти': 'Se déconnecter',
+    'Календарь, ежедневник и общий доступ в одном desktop-приложении.': 'Calendrier, agenda quotidien et partage dans une application de bureau.',
+    'Вход': 'Connexion',
+    'Регистрация': 'Inscription',
+    'Имя': 'Nom',
+    'Иван': 'Jean',
+    'Пароль': 'Mot de passe',
+    'Минимум 6 символов': 'Au moins 6 caractères',
+    'Подтвердить пароль': 'Confirmer le mot de passe',
+    'Повторите пароль': 'Répétez le mot de passe',
+    'Ваш пароль': 'Votre mot de passe',
+    'Запомнить устройство': 'Mémoriser cet appareil',
+    'Зарегистрироваться': 'Créer un compte',
+    'Войти': 'Se connecter',
+    'Код из письма': 'Code e-mail',
+    '2FA-код, если включен': 'Code 2FA, si activé',
+    'Подтвердить': 'Confirmer',
+    'Desktop сейчас, mobile потом': 'Bureau maintenant, mobile ensuite',
+    'Одна верстка перестраивается из широкой сетки календаря в компактный режим с нижней навигацией.': 'La même interface passe du calendrier large au mode compact avec navigation inférieure.',
+    'Добавляйте точные события или вводите их свободным текстом.': 'Ajoutez des événements précis ou saisissez-les en texte libre.',
+    'Поиск': 'Recherche',
+    'Предыдущий месяц': 'Mois précédent',
+    'Следующий месяц': 'Mois suivant',
+    'Быстрое добавление': 'Ajout rapide',
+    'Примеры: 10 July, 13.00, 15:00, Mam Birthday или 13-16 July, Holiday.': 'Exemples : 10 July, 13.00, 15:00, Mom Birthday ou 13-16 July, Holiday.',
+    'Естественный ввод': 'Saisie naturelle',
+    'Добавить': 'Ajouter',
+    'Пн': 'Lun',
+    'Вт': 'Mar',
+    'Ср': 'Mer',
+    'Чт': 'Jeu',
+    'Пт': 'Ven',
+    'Сб': 'Sam',
+    'Вс': 'Dim',
+    'Что добавить?': 'Que voulez-vous ajouter ?',
+    'В этом дне уже есть мероприятия. Выберите, что хотите добавить.': 'Cette journée contient déjà des événements. Choisissez quoi ajouter.',
+    'Событие': 'Événement',
+    'Заметку': 'Note',
+    'Выберите мероприятие': 'Choisir un événement',
+    'Редактирование события': 'Modifier l’événement',
+    'Свободный ввод': 'Saisie libre',
+    'Название': 'Titre',
+    'Дата': 'Date',
+    'Цвет': 'Couleur',
+    'Начало': 'Début',
+    'Конец': 'Fin',
+    'Сохранить': 'Enregistrer',
+    'Удалить событие': 'Supprimer l’événement',
+    'Удалить событие?': 'Supprimer l’événement ?',
+    'Выбранный день:': 'Jour choisi :',
+    'Будет удалено только выбранное мероприятие или выбранный день многодневного мероприятия. Его заметки удалятся только при полном удалении события.': 'Seul l’événement choisi ou le jour choisi d’un événement sur plusieurs jours sera supprimé. Les notes ne sont supprimées qu’avec l’événement complet.',
+    'Отмена': 'Annuler',
+    'Удалить': 'Supprimer',
+    'Заметки': 'Notes',
+    'Загрузка...': 'Chargement...',
+    'Обновлено:': 'Mis à jour :',
+    'Новая заметка': 'Nouvelle note',
+    'Что важно помнить об этом мероприятии?': 'Que faut-il retenir pour cet événement ?',
+    'Изменить': 'Modifier',
+    'Заметок пока нет.': 'Aucune note pour le moment.',
+    'На сегодня ничего не запланировано.': 'Rien de prévu aujourd’hui.',
+    'Ежедневник с отметкой выполненных событий.': 'Agenda quotidien avec événements terminés.',
+    'Отметить': 'Marquer',
+    'Личный кабинет': 'Compte',
+    'Все модули профиля сделаны отдельными кнопками-разделами.': 'Tous les modules du profil sont des sections séparées.',
+    'Настройки': 'Paramètres',
+    'Устройства': 'Appareils',
+    'Конфиденциальность': 'Confidentialité',
+    'Язык': 'Langue',
+    'Иконка': 'Icône',
+    'Помощь': 'Aide',
+    'Доступ': 'Partage',
+    'Тема': 'Thème',
+    'Светлая': 'Clair',
+    'Темная': 'Sombre',
+    'Цвет календаря': 'Couleur du calendrier',
+    'Русский': 'Russe',
+    'Иконка приложения': 'Icône de l’application',
+    'Отключить можно первое устройство или устройство, добавленное больше года назад.': 'Vous pouvez désactiver le premier appareil ou un appareil ajouté il y a plus d’un an.',
+    'Первый вход:': 'Première connexion :',
+    'Последний вход:': 'Dernière connexion :',
+    'Отключено:': 'Désactivé :',
+    'Отключить': 'Désactiver',
+    'Новый пароль': 'Nouveau mot de passe',
+    'Изменить пароль': 'Changer le mot de passe',
+    'Настроить 2FA': 'Configurer 2FA',
+    'Отключить 2FA': 'Désactiver 2FA',
+    'Тема обращения': 'Sujet',
+    'Сообщение': 'Message',
+    'Отправить': 'Envoyer',
+    'Доступ к календарю': 'Partage du calendrier',
+    'Email пользователя': 'E-mail utilisateur',
+    'Пригласить': 'Inviter',
+    'Принять приглашение по токену': 'Accepter l’invitation par jeton',
+    'Принять': 'Accepter',
+    'Статус:': 'Statut :',
+    'Токен:': 'Jeton :',
+    'Панель администратора для управления данными проекта.': 'Panneau d’administration des données du projet.',
+    'Сводка': 'Résumé',
+    'Пользователи': 'Utilisateurs',
+    'События': 'Événements',
+    'Приглашения': 'Invitations',
+    'Поддержка': 'Support',
+    'Логи': 'Journaux',
+    'Новые обращения': 'Nouvelles demandes',
+    'Данных пока нет.': 'Aucune donnée pour le moment.',
+    'Пароли не совпадают.': 'Les mots de passe ne correspondent pas.',
+    'Событие сохранено.': 'Événement enregistré.',
+    'Событие удалено.': 'Événement supprimé.',
+    'Настройки сохранены.': 'Paramètres enregistrés.',
+    'Пароль изменен.': 'Mot de passe modifié.',
+    '2FA включена.': '2FA activée.',
+    '2FA отключена.': '2FA désactivée.',
+    'Обращение отправлено.': 'Demande envoyée.',
+    'Доступ принят.': 'Accès accepté.',
+    'Демо-код:': 'Code démo :'
+    ,
+    'Код подтверждения отправлен.': 'Code de confirmation envoyé.',
+    'Введите код из почты.': 'Saisissez le code reçu par e-mail.',
+    'Вы вошли в аккаунт.': 'Vous êtes connecté.',
+    'Неверная почта или пароль.': 'E-mail ou mot de passe incorrect.',
+    'Код не подошел или устарел.': 'Le code est incorrect ou expiré.',
+    'Введите имя, корректную почту и пароль от 6 символов.': 'Saisissez un nom, un e-mail valide et un mot de passe d’au moins 6 caractères.',
+    'Пользователь с такой почтой уже существует.': 'Un utilisateur avec cet e-mail existe déjà.'
+  }
+};
+
+function currentLanguage() {
+  return (state.settings && state.settings.language) || 'ru';
+}
+
+function currentLocale() {
+  return locales[currentLanguage()] || locales.ru;
+}
+
+function t(text) {
+  var lang = currentLanguage();
+  if (lang === 'ru') return text;
+  return (i18n[lang] && i18n[lang][text]) || text;
+}
+
+function translateText(text) {
+  var exact = t(text);
+  if (exact !== text) return exact;
+  var prefixes = ['Выбранный день:', 'Обновлено:', 'Первый вход:', 'Последний вход:', 'Отключено:', 'Статус:', 'Токен:', 'Демо-код:'];
+  for (var i = 0; i < prefixes.length; i++) {
+    if (text.indexOf(prefixes[i]) === 0) {
+      return t(prefixes[i]) + text.slice(prefixes[i].length);
+    }
+  }
+  return text;
+}
+
+function translateMessage(text) {
+  if (!text) return '';
+  var demoMarker = ' Демо-код: ';
+  if (text.includes(demoMarker)) {
+    var parts = text.split(demoMarker);
+    return t(parts[0]) + ' ' + t('Демо-код:') + ' ' + parts.slice(1).join(demoMarker);
+  }
+  return translateText(text);
+}
+
+function localize(root) {
+  if (currentLanguage() === 'ru' || !root) return;
+  var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  var textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+  textNodes.forEach(function (node) {
+    var raw = node.nodeValue;
+    var trimmed = raw.trim();
+    if (!trimmed) return;
+    var translated = translateText(trimmed);
+    if (translated !== trimmed) node.nodeValue = raw.replace(trimmed, translated);
+  });
+  root.querySelectorAll('[placeholder], [title]').forEach(function (el) {
+    if (el.placeholder) el.placeholder = t(el.placeholder);
+    if (el.title) el.title = t(el.title);
+  });
+}
+
+var localizeObserver = new MutationObserver(function (mutations) {
+  mutations.forEach(function (mutation) {
+    mutation.addedNodes.forEach(function (node) {
+      if (node.nodeType === 1) localize(node);
+    });
+  });
+});
+localizeObserver.observe(document.body, { childList: true, subtree: true });
+
 function escapeHtml(value) {
   return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
     return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[ch];
@@ -21,7 +478,7 @@ function escapeHtml(value) {
 
 function fmtDate(value) {
   if (!value) return '';
-  return new Date(String(value).replace(' ', 'T')).toLocaleString([], { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return new Date(String(value).replace(' ', 'T')).toLocaleString(currentLocale(), { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 function ymd(date) {
@@ -39,6 +496,9 @@ function timePart(value, fallback) {
 
 function noteLabel(count) {
   count = Number(count || 0);
+  if (currentLanguage() === 'en') return count + ' ' + (count === 1 ? 'note' : 'notes');
+  if (currentLanguage() === 'de') return count + ' ' + (count === 1 ? 'Notiz' : 'Notizen');
+  if (currentLanguage() === 'fr') return count + ' ' + (count > 1 ? 'notes' : 'note');
   if (count % 10 === 1 && count % 100 !== 11) return count + ' заметка';
   if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) return count + ' заметки';
   return count + ' заметок';
@@ -66,7 +526,7 @@ function setTheme() {
 function notify(text, good) {
   var el = Array.from(document.querySelectorAll('[data-status]')).find(function (node) { return !node.closest('.hidden'); }) || document.querySelector('[data-status]');
   if (el) {
-    el.textContent = text || '';
+    el.textContent = translateMessage(text);
     el.className = 'status ' + (good ? 'good' : text ? 'bad' : '');
   }
 }
@@ -195,7 +655,7 @@ async function loadToday() {
 
 function renderCalendar() {
   var screen = document.getElementById('screen');
-  var title = state.month.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+  var title = state.month.toLocaleDateString(currentLocale(), { month: 'long', year: 'numeric' });
   screen.innerHTML = '<div class="topbar"><div><h1>' + title + '</h1><p>Добавляйте точные события или вводите их свободным текстом.</p></div><div class="top-actions"><input class="search" id="search" placeholder="Поиск" value="' + escapeHtml(state.search) + '"><button class="icon-btn" title="Предыдущий месяц" id="prevMonth">‹</button><button class="icon-btn" title="Следующий месяц" id="nextMonth">›</button></div></div><div class="layout-two"><section class="panel"><div class="calendar-head"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div><div class="calendar-grid" id="calendarGrid"></div></section><aside class="panel pad quick-add-panel"><h2>Быстрое добавление</h2><p>Примеры: 10 July, 13.00, 15:00, Mam Birthday или 13-16 July, Holiday.</p><div class="form"><label>Естественный ввод<input id="quickNatural" placeholder="13-16 July, Holiday"></label><button class="btn primary" id="quickAdd">Добавить</button><p data-status class="status"></p></div></aside></div>';
   drawCalendar();
   document.getElementById('prevMonth').onclick = function () { state.month = new Date(state.month.getFullYear(), state.month.getMonth() - 1, 1); loadEvents(); };
@@ -428,7 +888,7 @@ async function renderProfileBody() {
     document.getElementById('prepare2fa').onclick = async function () { var res = await api('twofa_prepare', {}, 'POST'); document.getElementById('twofaBox').innerHTML = '<p>Секрет для Google Authenticator: <strong>' + escapeHtml(res.secret) + '</strong></p><p class="meta">Демо-код сейчас: ' + escapeHtml(res.current_code) + '</p><label>Код из приложения<input id="totp"></label><button class="btn primary" id="enable2fa">Включить</button>'; document.getElementById('enable2fa').onclick = async function(){ await api('twofa_enable', { totp: val('totp') }, 'POST'); notify('2FA включена.', true); }; };
     document.getElementById('disable2fa').onclick = async function () { await api('twofa_disable', {}, 'POST'); notify('2FA отключена.', true); };
   } else if (state.profile === 'help') {
-    body.innerHTML = '<h2>Помощь</h2><div class="form"><label>Тема<input id="subject"></label><label>Сообщение<textarea id="message"></textarea></label><button class="btn primary" id="sendSupport">Отправить</button><p data-status class="status"></p></div>';
+    body.innerHTML = '<h2>Помощь</h2><div class="form"><label>Тема обращения<input id="subject"></label><label>Сообщение<textarea id="message"></textarea></label><button class="btn primary" id="sendSupport">Отправить</button><p data-status class="status"></p></div>';
     document.getElementById('sendSupport').onclick = async function () { await api('support', { subject: val('subject'), message: val('message') }, 'POST'); notify('Обращение отправлено.', true); };
   } else if (state.profile === 'share') {
     var shares = await api('shares', null, 'GET');
@@ -439,11 +899,15 @@ async function renderProfileBody() {
 }
 
 async function saveSettings() {
+  var oldLanguage = currentLanguage();
   var payload = Object.assign({}, state.settings);
   ['theme','palette','language','app_icon'].forEach(function (id) { var el = document.getElementById(id); if (el) payload[id] = el.value; });
   var res = await api('settings', payload, 'POST');
   state.settings = res.settings;
   setTheme();
+  if (oldLanguage !== currentLanguage()) {
+    render();
+  }
   notify('Настройки сохранены.', true);
 }
 
