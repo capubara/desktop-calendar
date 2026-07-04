@@ -2,10 +2,11 @@
   "name": "fantasia-calendar-desktop",
   "version": "1.0.0",
   "description": "Fantasia Calendar desktop shell",
+  "author": "capubara",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win nsis"
+    "dist": "set ELECTRON_CACHE=.cache\\electron&& set ELECTRON_BUILDER_CACHE=.cache\\electron-builder&& electron-builder --win nsis"
   },
   "devDependencies": {
     "electron": "^31.0.0",
@@ -39,7 +40,9 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "signAndEditExecutable": false,
+      "artifactName": "Fantasia-Calendar-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,

@@ -3,5 +3,6 @@ storage/mailbox.log
 storage/logs/
 desktop/node_modules/
 desktop/dist/
+desktop/.cache/
 desktop/vendor/php/
 *.log
