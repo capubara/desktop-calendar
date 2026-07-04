@@ -2,7 +2,11 @@
   "name": "fantasia-calendar-desktop",
   "version": "1.0.0",
   "description": "Fantasia Calendar desktop shell",
-  "author": "capubara",
+  "author": {
+    "name": "capubara",
+    "email": "capubara@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/capubara/desktop-calendar#readme",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -62,6 +66,7 @@
       ],
       "icon": "build/icon.png",
       "category": "Utility",
+      "maintainer": "capubara <capubara@users.noreply.github.com>",
       "artifactName": "Fantasia-Calendar-${version}-linux.${ext}"
     },
     "nsis": {
