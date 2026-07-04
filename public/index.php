@@ -211,7 +211,7 @@ function handle_action(PDO $pdo, array $config, string $action): void
 
     if ($action === 'settings') {
         $stmt = $pdo->prepare('UPDATE user_settings SET theme = ?, palette = ?, language = ?, app_icon = ? WHERE user_id = ?');
-        $stmt->execute([$data['theme'] ?? 'light', $data['palette'] ?? '#e85d75', $data['language'] ?? 'ru', $data['app_icon'] ?? 'spark', $userId]);
+        $stmt->execute([$data['theme'] ?? 'light', $data['palette'] ?? '#e85d75', $data['language'] ?? 'ru', $data['app_icon'] ?? 'check', $userId]);
         audit($pdo, $userId, 'settings.updated');
         json_response(['ok' => true, 'settings' => ensure_settings($pdo, $userId)]);
     }

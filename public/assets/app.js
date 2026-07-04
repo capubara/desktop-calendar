@@ -13,6 +13,25 @@ var state = {
 
 var app = document.getElementById('app');
 
+var appIcons = {
+  spark: { label: 'Spark', src: 'assets/icons/spark.png' },
+  sun: { label: 'Sun', src: 'assets/icons/sun.png' },
+  check: { label: 'Check', src: 'assets/icons/check.png' },
+  calendar: { label: 'Calendar', src: 'assets/icons/calendar.png' },
+  night_spark: { label: 'Night Spark', src: 'assets/icons/night-spark.png' },
+  night_sun: { label: 'Night Sun', src: 'assets/icons/night-sun.png' }
+};
+
+function currentAppIcon() {
+  var key = state.settings && state.settings.app_icon ? state.settings.app_icon : 'check';
+  return appIcons[key] || appIcons.check;
+}
+
+function brandMark(className) {
+  var icon = currentAppIcon();
+  return '<div class="brand-mark ' + (className || '') + '"><img src="' + icon.src + '" alt="' + escapeHtml(icon.label) + '"></div>';
+}
+
 var locales = {
   ru: 'ru-RU',
   en: 'en-US',
@@ -41,14 +60,14 @@ var i18n = {
     'Код из письма': 'Email code',
     '2FA-код, если включен': '2FA code, if enabled',
     'Подтвердить': 'Confirm',
-    'Desktop сейчас, mobile потом': 'Desktop now, mobile later',
+    'Desktop Version': 'Desktop Version',
     'Одна верстка перестраивается из широкой сетки календаря в компактный режим с нижней навигацией.': 'One layout adapts from a wide calendar grid to a compact mode with bottom navigation.',
     'Добавляйте точные события или вводите их свободным текстом.': 'Add exact events or type them as natural text.',
     'Поиск': 'Search',
     'Предыдущий месяц': 'Previous month',
     'Следующий месяц': 'Next month',
     'Быстрое добавление': 'Quick add',
-    'Примеры: 10 July, 13.00, 15:00, Mam Birthday или 13-16 July, Holiday.': 'Examples: 10 July, 13.00, 15:00, Mom Birthday or 13-16 July, Holiday.',
+    'Примеры: 10 July, 13.00, 15:00, Mom\'s Birthday или 13-16 July, Holiday.': 'Examples: 10 July, 13.00, 15:00, Mom\'s Birthday or 13-16 July, Holiday.',
     'Естественный ввод': 'Natural input',
     'Добавить': 'Add',
     'Пн': 'Mon',
@@ -169,14 +188,14 @@ var i18n = {
     'Код из письма': 'E-Mail-Code',
     '2FA-код, если включен': '2FA-Code, falls aktiviert',
     'Подтвердить': 'Bestätigen',
-    'Desktop сейчас, mobile потом': 'Desktop jetzt, mobil später',
+    'Desktop Version': 'Desktop-Version',
     'Одна верстка перестраивается из широкой сетки календаря в компактный режим с нижней навигацией.': 'Ein Layout passt sich vom breiten Kalender zur kompakten Ansicht mit unterer Navigation an.',
     'Добавляйте точные события или вводите их свободным текстом.': 'Fügen Sie genaue Termine hinzu oder geben Sie sie frei ein.',
     'Поиск': 'Suche',
     'Предыдущий месяц': 'Vorheriger Monat',
     'Следующий месяц': 'Nächster Monat',
     'Быстрое добавление': 'Schnell hinzufügen',
-    'Примеры: 10 July, 13.00, 15:00, Mam Birthday или 13-16 July, Holiday.': 'Beispiele: 10 July, 13.00, 15:00, Mom Birthday oder 13-16 July, Holiday.',
+    'Примеры: 10 July, 13.00, 15:00, Mom\'s Birthday или 13-16 July, Holiday.': 'Beispiele: 10 July, 13.00, 15:00, Mom\'s Birthday oder 13-16 July, Holiday.',
     'Естественный ввод': 'Natürliche Eingabe',
     'Добавить': 'Hinzufügen',
     'Пн': 'Mo',
@@ -297,14 +316,14 @@ var i18n = {
     'Код из письма': 'Code e-mail',
     '2FA-код, если включен': 'Code 2FA, si activé',
     'Подтвердить': 'Confirmer',
-    'Desktop сейчас, mobile потом': 'Bureau maintenant, mobile ensuite',
+    'Desktop Version': 'Version bureau',
     'Одна верстка перестраивается из широкой сетки календаря в компактный режим с нижней навигацией.': 'La même interface passe du calendrier large au mode compact avec navigation inférieure.',
     'Добавляйте точные события или вводите их свободным текстом.': 'Ajoutez des événements précis ou saisissez-les en texte libre.',
     'Поиск': 'Recherche',
     'Предыдущий месяц': 'Mois précédent',
     'Следующий месяц': 'Mois suivant',
     'Быстрое добавление': 'Ajout rapide',
-    'Примеры: 10 July, 13.00, 15:00, Mam Birthday или 13-16 July, Holiday.': 'Exemples : 10 July, 13.00, 15:00, Mom Birthday ou 13-16 July, Holiday.',
+    'Примеры: 10 July, 13.00, 15:00, Mom\'s Birthday или 13-16 July, Holiday.': 'Exemples : 10 July, 13.00, 15:00, Mom\'s Birthday ou 13-16 July, Holiday.',
     'Естественный ввод': 'Saisie naturelle',
     'Добавить': 'Ajouter',
     'Пн': 'Lun',
@@ -555,7 +574,7 @@ function render() {
 }
 
 function sidebar() {
-  return '<aside class="sidebar"><div class="logo-row"><div class="brand-mark">F</div><div><h3>Fantasia</h3><p>' + escapeHtml(state.user.email) + '</p></div></div><nav class="nav">' + navButtons() + '</nav><button class="btn ghost" data-action="logout">Выйти</button></aside>';
+  return '<aside class="sidebar"><div class="logo-row">' + brandMark() + '<div><h3>Fantasia</h3><p>' + escapeHtml(state.user.email) + '</p></div></div><nav class="nav">' + navButtons() + '</nav><button class="btn ghost" data-action="logout">Выйти</button></aside>';
 }
 
 function bottomNav() {
@@ -582,7 +601,7 @@ function renderAuth() {
   var fields = isRegister
     ? '<label>Имя<input name="name" placeholder="Иван" autocomplete="name"></label><label>Email<input name="email" type="email" placeholder="you@example.com" autocomplete="email"></label><label>Пароль<input name="password" type="password" placeholder="Минимум 6 символов" autocomplete="new-password"></label><label>Подтвердить пароль<input name="password_confirm" type="password" placeholder="Повторите пароль" autocomplete="new-password"></label>'
     : '<label>Email<input name="email" type="email" placeholder="you@example.com" autocomplete="email"></label><label>Пароль<input name="password" type="password" placeholder="Ваш пароль" autocomplete="current-password"></label><label class="checkbox"><input name="remember" type="checkbox" checked> Запомнить устройство</label>';
-  app.innerHTML = '<div class="auth-shell"><section class="auth-panel"><div class="brand-mark">F</div><div><h1>Fantasia Calendar</h1><p>Календарь, ежедневник и общий доступ в одном desktop-приложении.</p></div><div class="auth-tabs"><button class="' + (!isRegister ? 'active' : '') + '" data-auth-mode="login">Вход</button><button class="' + (isRegister ? 'active' : '') + '" data-auth-mode="register">Регистрация</button></div><div class="form" id="authForm">' + fields + '<button class="btn primary" data-auth="' + (isRegister ? 'register' : 'login') + '">' + (isRegister ? 'Зарегистрироваться' : 'Войти') + '</button><p data-status class="status"></p></div><div class="form hidden" id="verifyForm"><label>Код из письма<input name="code" inputmode="numeric" placeholder="123456"></label><label>2FA-код, если включен<input name="totp" inputmode="numeric" placeholder="000000"></label><button class="btn primary" data-auth="verify">Подтвердить</button><p data-status class="status"></p></div></section><section class="auth-preview"><h2>Desktop сейчас, mobile потом</h2><p>Одна верстка перестраивается из широкой сетки календаря в компактный режим с нижней навигацией.</p><div class="preview-grid">' + Array.from({length: 35}).map(function(){ return '<span></span>'; }).join('') + '</div></section></div>';
+  app.innerHTML = '<div class="auth-shell"><section class="auth-panel">' + brandMark() + '<div><h1>Fantasia Calendar</h1><p>Календарь, ежедневник и общий доступ в одном desktop-приложении.</p></div><div class="auth-tabs"><button class="' + (!isRegister ? 'active' : '') + '" data-auth-mode="login">Вход</button><button class="' + (isRegister ? 'active' : '') + '" data-auth-mode="register">Регистрация</button></div><div class="form" id="authForm">' + fields + '<button class="btn primary" data-auth="' + (isRegister ? 'register' : 'login') + '">' + (isRegister ? 'Зарегистрироваться' : 'Войти') + '</button><p data-status class="status"></p></div><div class="form hidden" id="verifyForm"><label>Код из письма<input name="code" inputmode="numeric" placeholder="123456"></label><label>2FA-код, если включен<input name="totp" inputmode="numeric" placeholder="000000"></label><button class="btn primary" data-auth="verify">Подтвердить</button><p data-status class="status"></p></div></section><section class="auth-preview"><h2>Desktop Version</h2><p>Одна верстка перестраивается из широкой сетки календаря в компактный режим с нижней навигацией.</p><div class="preview-grid">' + Array.from({length: 35}).map(function(){ return '<span></span>'; }).join('') + '</div></section></div>';
   document.querySelectorAll('[data-auth-mode]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       state.authMode = btn.dataset.authMode;
@@ -656,7 +675,7 @@ async function loadToday() {
 function renderCalendar() {
   var screen = document.getElementById('screen');
   var title = state.month.toLocaleDateString(currentLocale(), { month: 'long', year: 'numeric' });
-  screen.innerHTML = '<div class="topbar"><div><h1>' + title + '</h1><p>Добавляйте точные события или вводите их свободным текстом.</p></div><div class="top-actions"><input class="search" id="search" placeholder="Поиск" value="' + escapeHtml(state.search) + '"><button class="icon-btn" title="Предыдущий месяц" id="prevMonth">‹</button><button class="icon-btn" title="Следующий месяц" id="nextMonth">›</button></div></div><div class="layout-two"><section class="panel"><div class="calendar-head"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div><div class="calendar-grid" id="calendarGrid"></div></section><aside class="panel pad quick-add-panel"><h2>Быстрое добавление</h2><p>Примеры: 10 July, 13.00, 15:00, Mam Birthday или 13-16 July, Holiday.</p><div class="form"><label>Естественный ввод<input id="quickNatural" placeholder="13-16 July, Holiday"></label><button class="btn primary" id="quickAdd">Добавить</button><p data-status class="status"></p></div></aside></div>';
+  screen.innerHTML = '<div class="topbar"><div><h1>' + title + '</h1><p>Добавляйте точные события или вводите их свободным текстом.</p></div><div class="top-actions"><input class="search" id="search" placeholder="Поиск" value="' + escapeHtml(state.search) + '"><button class="icon-btn" title="Предыдущий месяц" id="prevMonth">‹</button><button class="icon-btn" title="Следующий месяц" id="nextMonth">›</button></div></div><div class="layout-two"><section class="panel"><div class="calendar-head"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div><div class="calendar-grid" id="calendarGrid"></div></section><aside class="panel pad quick-add-panel"><h2>Быстрое добавление</h2><p>Примеры: 10 July, 13.00, 15:00, Mom&#039;s Birthday или 13-16 July, Holiday.</p><div class="form"><label>Естественный ввод<input id="quickNatural" placeholder="13-16 July, Holiday"></label><button class="btn primary" id="quickAdd">Добавить</button><p data-status class="status"></p></div></aside></div>';
   drawCalendar();
   document.getElementById('prevMonth').onclick = function () { state.month = new Date(state.month.getFullYear(), state.month.getMonth() - 1, 1); loadEvents(); };
   document.getElementById('nextMonth').onclick = function () { state.month = new Date(state.month.getFullYear(), state.month.getMonth() + 1, 1); loadEvents(); };
@@ -742,7 +761,7 @@ function openEventModal(event, selectedDate) {
   var startTime = timePart(event.starts_at, '09:00');
   var endTime = timePart(event.ends_at, '10:00');
   var deleteButton = isEdit ? '<button class="btn danger" id="deleteEvent">Удалить событие</button>' : '';
-  var html = '<div class="modal-backdrop" id="modal"><div class="modal"><div class="topbar"><h2>' + (isEdit ? 'Редактирование события' : 'Событие') + '</h2><button class="icon-btn" id="closeModal">×</button></div><div class="form"><label>Свободный ввод<input id="natural" placeholder="10 July, 13.00, 15:00, Mam Birthday"></label><label>Название<input id="title" value="' + escapeHtml(event.title || '') + '"></label><div class="form-row"><label>Дата<input id="date" type="date" value="' + escapeHtml(eventDate || '') + '"></label><label>Цвет<input id="color" type="color" value="' + escapeHtml(event.color || state.settings.palette || '#e85d75') + '"></label></div><div class="form-row"><label>Начало<input id="start_time" type="time" value="' + escapeHtml(startTime) + '"></label><label>Конец<input id="end_time" type="time" value="' + escapeHtml(endTime) + '"></label></div><div class="event-modal-actions"><button class="btn primary" id="saveEvent">Сохранить</button>' + deleteButton + '</div><p data-status class="status"></p></div></div></div>';
+  var html = '<div class="modal-backdrop" id="modal"><div class="modal"><div class="topbar"><h2>' + (isEdit ? 'Редактирование события' : 'Событие') + '</h2><button class="icon-btn" id="closeModal">×</button></div><div class="form"><label>Свободный ввод<input id="natural" placeholder="10 July, 13.00, 15:00, Mom&#039;s Birthday"></label><label>Название<input id="title" value="' + escapeHtml(event.title || '') + '"></label><div class="form-row"><label>Дата<input id="date" type="date" value="' + escapeHtml(eventDate || '') + '"></label><label>Цвет<input id="color" type="color" value="' + escapeHtml(event.color || state.settings.palette || '#e85d75') + '"></label></div><div class="form-row"><label>Начало<input id="start_time" type="time" value="' + escapeHtml(startTime) + '"></label><label>Конец<input id="end_time" type="time" value="' + escapeHtml(endTime) + '"></label></div><div class="event-modal-actions"><button class="btn primary" id="saveEvent">Сохранить</button>' + deleteButton + '</div><p data-status class="status"></p></div></div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
   document.getElementById('closeModal').onclick = closeModal;
   document.getElementById('saveEvent').onclick = async function () {
@@ -875,8 +894,16 @@ async function renderProfileBody() {
     document.getElementById('language').value = state.settings.language;
     document.getElementById('saveSettings').onclick = saveSettings;
   } else if (state.profile === 'icon') {
-    body.innerHTML = '<h2>Иконка приложения</h2><div class="form"><select id="app_icon"><option value="spark">Spark</option><option value="sun">Sun</option><option value="check">Check</option><option value="calendar">Calendar</option></select><button class="btn primary" id="saveSettings">Сохранить</button><p data-status class="status"></p></div>';
-    document.getElementById('app_icon').value = state.settings.app_icon;
+    var iconOptions = Object.keys(appIcons).map(function (key) {
+      var icon = appIcons[key];
+      return '<label class="icon-choice"><input type="radio" name="app_icon_choice" value="' + key + '"><span><img src="' + icon.src + '" alt="' + escapeHtml(icon.label) + '"><strong>' + escapeHtml(icon.label) + '</strong></span></label>';
+    }).join('');
+    body.innerHTML = '<h2>Иконка приложения</h2><div class="form"><input id="app_icon" type="hidden" value="' + escapeHtml(state.settings.app_icon || 'check') + '"><div class="icon-grid">' + iconOptions + '</div><button class="btn primary" id="saveSettings">Сохранить</button><p data-status class="status"></p></div>';
+    var activeIcon = appIcons[state.settings.app_icon] ? state.settings.app_icon : 'check';
+    document.querySelectorAll('[name="app_icon_choice"]').forEach(function (input) {
+      input.checked = input.value === activeIcon;
+      input.onchange = function () { document.getElementById('app_icon').value = input.value; };
+    });
     document.getElementById('saveSettings').onclick = saveSettings;
   } else if (state.profile === 'devices') {
     var res = await api('devices', null, 'GET');
@@ -900,12 +927,13 @@ async function renderProfileBody() {
 
 async function saveSettings() {
   var oldLanguage = currentLanguage();
+  var oldIcon = state.settings ? state.settings.app_icon : 'check';
   var payload = Object.assign({}, state.settings);
   ['theme','palette','language','app_icon'].forEach(function (id) { var el = document.getElementById(id); if (el) payload[id] = el.value; });
   var res = await api('settings', payload, 'POST');
   state.settings = res.settings;
   setTheme();
-  if (oldLanguage !== currentLanguage()) {
+  if (oldLanguage !== currentLanguage() || oldIcon !== state.settings.app_icon) {
     render();
   }
   notify('Настройки сохранены.', true);

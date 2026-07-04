@@ -26,6 +26,14 @@ function locatePhp() {
   return 'php';
 }
 
+function locateAppIcon() {
+  const packagedIcon = path.join(process.resourcesPath, 'server', 'public', 'assets', 'icons', 'check.png');
+  const devIcon = path.resolve(__dirname, '..', 'public', 'assets', 'icons', 'check.png');
+  if (fs.existsSync(packagedIcon)) return packagedIcon;
+  if (fs.existsSync(devIcon)) return devIcon;
+  return undefined;
+}
+
 function prepareServerFiles() {
   if (!app.isPackaged) return path.resolve(__dirname, '..');
   const source = path.join(process.resourcesPath, 'server');
@@ -59,6 +67,7 @@ function createWindow() {
     minHeight: 680,
     backgroundColor: '#f7f5f0',
     title: 'Fantasia Calendar',
+    icon: locateAppIcon(),
     webPreferences: { contextIsolation: true, nodeIntegration: false }
   });
   setTimeout(() => win.loadURL('http://127.0.0.1:' + port), 700);

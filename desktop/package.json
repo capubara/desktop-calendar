@@ -41,7 +41,7 @@
     ],
     "win": {
       "target": "nsis",
-      "signAndEditExecutable": false,
+      "icon": "build/icon.ico",
       "artifactName": "Fantasia-Calendar-Setup-${version}.${ext}"
     },
     "nsis": {

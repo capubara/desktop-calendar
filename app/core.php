@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
     theme TEXT NOT NULL DEFAULT 'light',
     palette TEXT NOT NULL DEFAULT '#e85d75',
     language TEXT NOT NULL DEFAULT 'ru',
-    app_icon TEXT NOT NULL DEFAULT 'spark',
+    app_icon TEXT NOT NULL DEFAULT 'check',
     twofa_enabled INTEGER NOT NULL DEFAULT 0,
     twofa_secret TEXT,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
