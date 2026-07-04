@@ -1,7 +1,6 @@
 const { app, BrowserWindow, Menu, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const fsp = require('fs/promises');
 const { spawn } = require('child_process');
 
 let phpProcess = null;
@@ -18,12 +17,51 @@ function copyDir(source, target) {
   }
 }
 
+function phpPlatformName() {
+  if (process.platform === 'win32') return 'win';
+  if (process.platform === 'darwin') return 'mac';
+  return 'linux';
+}
+
+function phpExecutableName() {
+  return process.platform === 'win32' ? 'php.exe' : path.join('bin', 'php');
+}
+
 function locatePhp() {
-  const packagedPhp = path.join(process.resourcesPath, 'php', 'php.exe');
-  const devPhp = path.join(__dirname, 'vendor', 'php', 'php.exe');
-  if (fs.existsSync(packagedPhp)) return packagedPhp;
-  if (fs.existsSync(devPhp)) return devPhp;
-  return 'php';
+  const platformDir = phpPlatformName();
+  const executable = phpExecutableName();
+  const candidates = [
+    path.join(process.resourcesPath, 'php', platformDir, executable),
+    path.join(__dirname, 'vendor', 'php', platformDir, executable),
+    path.join(process.resourcesPath, 'php', executable),
+    path.join(__dirname, 'vendor', 'php', executable)
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return { executable: candidate, root: path.dirname(candidate) };
+    }
+  }
+
+  return { executable: 'php', root: null };
+}
+
+function phpEnvironment(phpRoot) {
+  const env = { ...process.env };
+  if (!phpRoot) return env;
+
+  const runtimeRoot = process.platform === 'win32' ? phpRoot : path.dirname(phpRoot);
+  const separator = process.platform === 'win32' ? ';' : ':';
+  env.PATH = [phpRoot, runtimeRoot, env.PATH].filter(Boolean).join(separator);
+
+  if (process.platform === 'linux') {
+    env.LD_LIBRARY_PATH = [runtimeRoot, path.join(runtimeRoot, 'lib'), env.LD_LIBRARY_PATH].filter(Boolean).join(':');
+  }
+  if (process.platform === 'darwin') {
+    env.DYLD_LIBRARY_PATH = [runtimeRoot, path.join(runtimeRoot, 'lib'), env.DYLD_LIBRARY_PATH].filter(Boolean).join(':');
+  }
+
+  return env;
 }
 
 function locateAppIcon() {
@@ -48,12 +86,15 @@ function startPhpServer() {
   const serverRoot = prepareServerFiles();
   const publicDir = path.join(serverRoot, 'public');
   const php = locatePhp();
-  phpProcess = spawn(php, ['-S', '127.0.0.1:' + port, '-t', publicDir], {
+  phpProcess = spawn(php.executable, ['-S', '127.0.0.1:' + port, '-t', publicDir], {
     cwd: serverRoot,
+    env: phpEnvironment(php.root),
     windowsHide: true,
     stdio: 'ignore'
   });
   phpProcess.on('error', (error) => {
+    dialog.showErrorBox('PHP runtime was not found', 'The app needs a bundled PHP runtime. Put PHP into desktop/vendor/php/' + phpPlatformName() + ' before building, or install php in the system PATH.\n\n' + error.message);
+    return;
     dialog.showErrorBox('PHP не найден', 'Приложению нужен php.exe. Положите PHP в desktop/vendor/php/php.exe перед сборкой или установите PHP в систему.\n\n' + error.message);
   });
 }

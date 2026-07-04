@@ -5,4 +5,6 @@ desktop/node_modules/
 desktop/dist/
 desktop/.cache/
 desktop/vendor/php/
+desktop/build/icon.iconset/
+desktop/build/extracted-*.png
 *.log

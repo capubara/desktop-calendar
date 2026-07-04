@@ -1,0 +1,129 @@
+name: Build desktop releases
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to upload assets to"
+        required: true
+        default: "v1.0.0"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-latest
+            php_runtime: win
+            build_script: dist:win
+          - platform: linux
+            os: ubuntu-latest
+            php_runtime: linux
+            build_script: dist:linux
+          - platform: mac
+            os: macos-latest
+            php_runtime: mac
+            build_script: dist:mac
+
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo_sqlite, sqlite3
+          coverage: none
+
+      - name: Install desktop dependencies
+        working-directory: desktop
+        run: npm ci
+
+      - name: Prepare Windows PHP runtime
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $phpExe = (Get-Command php).Source
+          $phpDir = Split-Path $phpExe
+          $target = "desktop/vendor/php/win"
+          New-Item -ItemType Directory -Force -Path $target | Out-Null
+          Copy-Item -Path "$phpDir\*" -Destination $target -Recurse -Force
+          php -m
+
+      - name: Prepare Unix PHP runtime
+        if: matrix.platform != 'windows'
+        shell: bash
+        run: |
+          php_bin="$(command -v php)"
+          target="desktop/vendor/php/${{ matrix.php_runtime }}/bin"
+          mkdir -p "$target"
+          cp -L "$php_bin" "$target/php"
+          chmod +x "$target/php"
+          php -m
+
+      - name: Prepare macOS icon
+        if: matrix.platform == 'mac'
+        shell: bash
+        run: |
+          iconset="desktop/build/icon.iconset"
+          mkdir -p "$iconset"
+          sips -z 16 16 desktop/build/icon.png --out "$iconset/icon_16x16.png"
+          sips -z 32 32 desktop/build/icon.png --out "$iconset/icon_16x16@2x.png"
+          sips -z 32 32 desktop/build/icon.png --out "$iconset/icon_32x32.png"
+          sips -z 64 64 desktop/build/icon.png --out "$iconset/icon_32x32@2x.png"
+          sips -z 128 128 desktop/build/icon.png --out "$iconset/icon_128x128.png"
+          sips -z 256 256 desktop/build/icon.png --out "$iconset/icon_128x128@2x.png"
+          sips -z 256 256 desktop/build/icon.png --out "$iconset/icon_256x256.png"
+          sips -z 512 512 desktop/build/icon.png --out "$iconset/icon_256x256@2x.png"
+          sips -z 512 512 desktop/build/icon.png --out "$iconset/icon_512x512.png"
+          cp desktop/build/icon.png "$iconset/icon_512x512@2x.png"
+          iconutil -c icns "$iconset" -o desktop/build/icon.icns
+
+      - name: Build package
+        working-directory: desktop
+        run: npm run ${{ matrix.build_script }}
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fantasia-calendar-${{ matrix.platform }}
+          path: |
+            desktop/dist/*.exe
+            desktop/dist/*.AppImage
+            desktop/dist/*.deb
+            desktop/dist/*.dmg
+            desktop/dist/*.zip
+          if-no-files-found: error
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || inputs.tag }}
+          files: |
+            desktop/dist/*.exe
+            desktop/dist/*.AppImage
+            desktop/dist/*.deb
+            desktop/dist/*.dmg
+            desktop/dist/*.zip
+          fail_on_unmatched_files: false

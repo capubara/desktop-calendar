@@ -6,7 +6,10 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "set ELECTRON_CACHE=.cache\\electron&& set ELECTRON_BUILDER_CACHE=.cache\\electron-builder&& electron-builder --win nsis"
+    "dist": "npm run dist:win",
+    "dist:win": "set ELECTRON_CACHE=.cache\\electron&& set ELECTRON_BUILDER_CACHE=.cache\\electron-builder&& electron-builder --win nsis",
+    "dist:linux": "electron-builder --linux AppImage deb",
+    "dist:mac": "electron-builder --mac dmg zip"
   },
   "devDependencies": {
     "electron": "^31.0.0",
@@ -43,6 +46,23 @@
       "target": "nsis",
       "icon": "build/icon.ico",
       "artifactName": "Fantasia-Calendar-Setup-${version}.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "build/icon.icns",
+      "artifactName": "Fantasia-Calendar-${version}-mac.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "build/icon.png",
+      "category": "Utility",
+      "artifactName": "Fantasia-Calendar-${version}-linux.${ext}"
     },
     "nsis": {
       "oneClick": false,
