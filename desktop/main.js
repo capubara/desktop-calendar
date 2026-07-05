@@ -37,6 +37,14 @@ function waitForServer(selectedPort, timeoutMs) {
     function ping() {
       const request = http.get('http://127.0.0.1:' + selectedPort, (response) => {
         response.resume();
+        if (response.statusCode && response.statusCode >= 500) {
+          if (Date.now() > deadline) {
+            reject(new Error('The local app server returns HTTP ' + response.statusCode + '.'));
+            return;
+          }
+          setTimeout(ping, 250);
+          return;
+        }
         resolve();
       });
       request.on('error', () => {
@@ -91,7 +99,7 @@ function phpEnvironment(phpRoot) {
   const env = { ...process.env };
   if (!phpRoot) return env;
 
-  const runtimeRoot = process.platform === 'win32' ? phpRoot : path.dirname(phpRoot);
+  const runtimeRoot = phpRuntimeRoot(phpRoot);
   const separator = process.platform === 'win32' ? ';' : ':';
   env.PATH = [phpRoot, runtimeRoot, env.PATH].filter(Boolean).join(separator);
 
@@ -103,6 +111,43 @@ function phpEnvironment(phpRoot) {
   }
 
   return env;
+}
+
+function phpRuntimeRoot(phpRoot) {
+  return process.platform === 'win32' ? phpRoot : path.dirname(phpRoot);
+}
+
+function phpExtensionFile(extensionName) {
+  if (process.platform === 'win32') return 'php_' + extensionName + '.dll';
+  return extensionName + '.so';
+}
+
+function createPhpIni(phpRoot, logPath) {
+  if (!phpRoot) return null;
+
+  const runtimeRoot = phpRuntimeRoot(phpRoot);
+  const extensionDir = path.join(runtimeRoot, 'ext');
+  const iniPath = path.join(app.getPath('userData'), 'php-runtime.ini');
+  const extensions = ['pdo_sqlite', 'sqlite3', 'mbstring', 'openssl', 'curl']
+    .filter((extensionName) => fs.existsSync(path.join(extensionDir, phpExtensionFile(extensionName))));
+  const escapeIniPath = (value) => value.replace(/\\/g, '\\\\');
+  const lines = [
+    'display_errors=1',
+    'display_startup_errors=1',
+    'log_errors=1',
+    'error_log="' + escapeIniPath(logPath) + '"',
+    'date.timezone=UTC'
+  ];
+
+  if (fs.existsSync(extensionDir)) {
+    lines.push('extension_dir="' + escapeIniPath(extensionDir) + '"');
+  }
+  extensions.forEach((extensionName) => {
+    lines.push('extension=' + extensionName);
+  });
+
+  fs.writeFileSync(iniPath, lines.join('\n') + '\n');
+  return iniPath;
 }
 
 function locateAppIcon() {
@@ -146,11 +191,16 @@ async function startPhpServerSafe() {
   const publicDir = path.join(serverRoot, 'public');
   const php = locatePhp();
   const logPath = path.join(app.getPath('userData'), 'php-server.log');
+  const phpIni = createPhpIni(php.root, logPath);
+  const phpArgs = ['-S', '127.0.0.1:' + port, '-t', publicDir];
+  if (phpIni) {
+    phpArgs.unshift('-c', phpIni);
+  }
 
-  fs.writeFileSync(logPath, 'Starting PHP server\nPHP: ' + php.executable + '\nRoot: ' + serverRoot + '\nPort: ' + port + '\n\n');
+  fs.writeFileSync(logPath, 'Starting PHP server\nPHP: ' + php.executable + '\nPHP ini: ' + (phpIni || 'system default') + '\nRoot: ' + serverRoot + '\nPort: ' + port + '\n\n');
   const logStream = fs.createWriteStream(logPath, { flags: 'a' });
 
-  phpProcess = spawn(php.executable, ['-S', '127.0.0.1:' + port, '-t', publicDir], {
+  phpProcess = spawn(php.executable, phpArgs, {
     cwd: serverRoot,
     env: phpEnvironment(php.root),
     windowsHide: true,
